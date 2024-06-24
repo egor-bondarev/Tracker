@@ -5,10 +5,10 @@ import pytest
 from pydantic import ValidationError
 from sqlalchemy.exc import NoResultFound
 
-from sampleService.src.crud import user
-from sampleService.src.schemas.schemas import UserCreate
-from sampleService.tests.helpers import generator
-from sampleService.tests.unit.helpers import db_helper
+from src.crud import user
+from src.schemas.schemas import UserCreate
+from tests.helpers import generator
+from tests.unit.helpers import db_helper
 
 @pytest.mark.parametrize("username", [(''), (None)])
 def test_create_user_invalid_username(db_session_local, username):

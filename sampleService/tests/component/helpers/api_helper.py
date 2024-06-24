@@ -2,7 +2,7 @@
 
 import json
 import requests
-from sampleService.tests import config
+from tests import config
 
 def get_service_url():
     client_config = config.ClientSettings()

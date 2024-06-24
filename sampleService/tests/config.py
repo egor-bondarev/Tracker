@@ -23,6 +23,6 @@ class Settings(BaseSettings):
     DATABASE_NAME: str
 
     model_config = SettingsConfigDict(
-        env_file="../../.env.testing",
+        env_file="./.env.testing",
         hide_input_in_errors=True,
         extra='ignore')

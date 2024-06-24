@@ -4,9 +4,9 @@ import pytest
 
 from fastapi import status
 
-from sampleService.src.resources.errors import UserNotFound, EmptyUserNameError, UsernameIsTooLong
-from sampleService.tests.component.helpers import api_helper, db_helper
-from sampleService.tests.helpers import generator, error_msg
+from src.resources.errors import UserNotFound, EmptyUserNameError, UsernameIsTooLong
+from tests.component.helpers import api_helper, db_helper
+from tests.helpers import generator, error_msg
 
 
 def test_post_user_empty_name():

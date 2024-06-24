@@ -1,6 +1,6 @@
 #.PHONY: component_tests unit_tests all_tests run_dev stop_dev
 
-COMPONENT_TESTS_DIR = ./tests/component
+COMPONENT_TESTS_DIR = ./tests/component/
 UNIT_TESTS_DIR = ./tests/unit
 ALL_TESTS_DIR = ./tests
 export PYTHONPATH := $(shell pwd)

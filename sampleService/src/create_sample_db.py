@@ -1,5 +1,7 @@
-import psycopg2
+""" Creating database. """
+
 import os
+import psycopg2
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -22,7 +24,6 @@ def create_database():
         host=postgres_host,
         port=postgres_port
     )
-    
 
     default_connection.autocommit = True
     cursor_default = default_connection.cursor()

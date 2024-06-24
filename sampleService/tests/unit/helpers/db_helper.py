@@ -2,7 +2,7 @@
 
 from sqlalchemy.orm import Session
 from sqlmodel import select
-from sampleService.src.models import models
+from src.models import models
 
 def db_remove_user(session: Session, user_id: int):
     user = session.execute(select(models.User).where(models.User.id == user_id)).first()[0]

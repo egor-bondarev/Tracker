@@ -7,16 +7,14 @@ from sqlalchemy import create_engine
 from sqlmodel import select
 from typing_extensions import Annotated
 
-from sampleService.src.models import models
-from sampleService.tests import config
+from src.models import models
+from tests import config
 
 def get_settings():
     return config.Settings()
 
 def get_db_url(settings: Annotated[config.Settings, Depends(get_settings)]) -> PostgresDsn:
     ''' Generate db url. '''
-    print(settings.database_user)
-    print('*********')
     try:
         conn = PostgresDsn.build(
             scheme='postgresql',

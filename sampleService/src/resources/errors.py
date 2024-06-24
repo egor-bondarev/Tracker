@@ -1,9 +1,6 @@
-from fastapi import HTTPException
-from enum import Enum
+""" Error messages. """
 
-# class ErrorTemplate(str, Enum):
-#     status_code = 0,
-#     detail = ''
+from enum import Enum
 
 class EmptyUserNameError(str, Enum):
     STATUS_CODE = 422

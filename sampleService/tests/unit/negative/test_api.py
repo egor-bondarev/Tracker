@@ -5,11 +5,11 @@ import pytest
 from fastapi import HTTPException, status
 from pydantic import ValidationError
 
-from sampleService.src.api import sample
-from sampleService.src.resources.errors import UsernameIsTooLong
-from sampleService.src.schemas import schemas
-from sampleService.tests.helpers import generator, error_msg
-from sampleService.tests.unit.helpers import db_helper
+from src.api import sample
+from src.resources.errors import UsernameIsTooLong
+from src.schemas import schemas
+from tests.helpers import generator, error_msg
+from tests.unit.helpers import db_helper
 
 def test_get_not_existed_user(db_session_local):
     db = db_session_local

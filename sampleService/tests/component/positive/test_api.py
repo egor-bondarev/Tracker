@@ -4,8 +4,8 @@ import pytest
 
 from fastapi import status
 
-from sampleService.tests.component.helpers import api_helper, db_helper
-from sampleService.tests.helpers import generator
+from tests.component.helpers import api_helper, db_helper
+from tests.helpers import generator
 
 @pytest.mark.parametrize(
     "username", [(generator.custom_string(1)), (generator.number_one_symbol())])

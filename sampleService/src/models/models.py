@@ -1,7 +1,7 @@
 """ SQLAlchemy models for the tables. """
 
 from sqlalchemy import Column, Integer, String
-from db.session import Base
+from src.db.session import Base
 
 class User(Base):
     __tablename__ = 'users'
