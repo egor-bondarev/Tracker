@@ -2,7 +2,7 @@ name: Sample Service GitHub Actions Demo
 run-name: ${{ github.actor }} is testing out SampleService
 on: [push]
 jobs:
-  sampleservice:
+  sampleService:
     runs-on: ubuntu-latest
 
     steps:
@@ -19,6 +19,10 @@ jobs:
       - name: install requirements
         run: |
           pip install -r ./sampleService/src/requirements.txt
+
+      - name: DEBUG POSTGRES
+        run: |
+          PGPASSWORD=pgpswd psql -U admin_tracker -d tracker -c "select * from users"
 
       - name: run component tests
         run: |
