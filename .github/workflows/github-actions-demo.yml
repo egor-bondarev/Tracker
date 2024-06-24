@@ -23,6 +23,9 @@ jobs:
       # - name: DEBUG POSTGRES
       #   run: |
       #     set PGPASSWORD=pgpswd; psql --username=admin_tracker --password=pgpswd --host=0.0.0.0 --port=5454 --dbname=tracker --command="select * from users"
+      - name: test
+        run: |
+          sleep 10
 
       - name: run component tests
         run: |
