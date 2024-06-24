@@ -27,3 +27,4 @@ sample_stop_dev:
 .PHONY: sample_print_vars
 sample_print_vars: 
 	echo $(PYTHONPATH)
+	echo $(POSTGRESQL_PASSWORD)

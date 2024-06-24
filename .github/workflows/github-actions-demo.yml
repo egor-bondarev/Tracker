@@ -24,6 +24,10 @@ jobs:
       - name: install requirements
         run: |
           pip install -r ./sampleService/src/requirements.txt
+      
+      - name: debug enc
+        run: |
+          make sample_print_vars
 
       - name: Execute tests in the running services
         run: |
