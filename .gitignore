@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 .DS_Store
 /Tracker
+/sampleService/src/test.db
 
 # C extensions
 *.so
