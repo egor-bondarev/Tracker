@@ -16,7 +16,7 @@ jobs:
         uses: hoverkraft-tech/compose-action@v2.0.1
         with:
           compose-file: "./sampleService/docker-compose.testing.yml"
-          up-flags: "--env-file ./sampleService/.env.testing"
+          up-flags: "env-file ./sampleService/.env.testing"
       # - name: test run dev
       #   run: |
       #     make sample_run_dev
