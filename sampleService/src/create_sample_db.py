@@ -10,8 +10,8 @@ def create_database():
     postgres_admin = os.getenv('DATABASE_ADMIN')
     postgres_admin_password = os.getenv('DATABASE_ADMIN_PASSWORD')
     postgres_db_default = os.getenv('DATABASE_DEFAULT_NAME')
-    postgres_host = os.getenv('DATABASE_HOST')
-    postgres_port = os.getenv('DATABASE_PORT')
+    postgres_host = os.getenv('SAMPLE_SERVICE_HOST')
+    postgres_port = os.getenv('DATABASE_EXTERNAL_PORT')
 
     postgres_user = os.getenv('DATABASE_USER')
     postgres_password = os.getenv('DATABASE_PASSWORD')
