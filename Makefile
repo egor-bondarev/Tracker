@@ -1,4 +1,3 @@
-#.PHONY: component_tests unit_tests all_tests run_dev stop_dev
 
 COMPONENT_TESTS_DIR = ./sampleService/tests/component
 UNIT_TESTS_DIR = ./sampleService/tests/unit
@@ -7,10 +6,7 @@ export PYTHONPATH := $(shell pwd)/sampleService
 
 .PHONY: sample_component_tests
 sample_component_tests:
-	ls
-	ls ./sampleService
-	echo "$(PWD)"
-	pytest /home/runner/work/Tracker/Tracker/sampleService/tests/component
+	pytest $(COMPONENT_TESTS_DIR)
 
 .PHONY: sample_unit_tests
 sample_unit_tests:
