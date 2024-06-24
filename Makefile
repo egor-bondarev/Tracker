@@ -1,9 +1,9 @@
 #.PHONY: component_tests unit_tests all_tests run_dev stop_dev
 
-COMPONENT_TESTS_DIR = ./sampleService/tests/component/
+COMPONENT_TESTS_DIR = ./sampleService/tests/component
 UNIT_TESTS_DIR = ./sampleService/tests/unit
 ALL_TESTS_DIR = ./sampleService/tests
-export PYTHONPATH := $(shell pwd)
+export PYTHONPATH := $(shell pwd)/sampleService
 
 .PHONY: sample_component_tests
 sample_component_tests:

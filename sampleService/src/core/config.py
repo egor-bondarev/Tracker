@@ -5,7 +5,7 @@ from pydantic import PostgresDsn, ValidationError, ConfigDict
 
 class Settings(BaseSettings):
     ''' Settings for db connection. '''
-    model_config = ConfigDict(extra='ignore', env_file = "../../.env.testing")
+    model_config = ConfigDict(extra='ignore', env_file = "./sampleService/.env.testing")
 
     DATABASE_USER: str = os.getenv('DATABASE_USER')
     DATABASE_PASSWORD: str = os.getenv('DATABASE_PASSWORD')
