@@ -8,7 +8,7 @@ services:
     volumes:
       - ./src/test.db:/app/test.db
       - postgres_data:/var/lib/postgresql/data
-    env_file: "./sampleService/.env.testing"
+    env_file: ".env.testing"
     ports:
       - 5454:5432
     expose:
@@ -19,11 +19,12 @@ services:
       - POSTGRESQL_DATABASE=${DATABASE_DEFAULT_NAME}
       - POSTGRESQL_HOST=${DATABASE_HOST}
       - POSTGRESQL_PORT=${DATABASE_PORT}
+    entrypoint: ["sh", "echo ${POSTGRESQL_PASSWORD}"]
 
   database_init:
     container_name: database_sample_init
     image: python:3.11
-    env_file: "./sampleService/.env.testing"
+    env_file: ".env.testing"
     volumes:
       - ./src/create_sample_db.py:/app/create_sample_db.py
     environment:
