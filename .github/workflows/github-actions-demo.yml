@@ -8,10 +8,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # - name: launch services
+      #   run: |
+      #     make sample_run_dev
       - name: launch services
-        run: |
-          make sample_run_dev
-
+        uses: smartlyio/docker-compose-action@v1
+        with:
+          composeFile: |
+            ./sampleService/docker-compose.testing.yml
+          composeArguments: "--env-file=./sampleService/.env.testing"
+          
       - name: install PyTest
         run: |
           pip install pytest
@@ -19,13 +25,6 @@ jobs:
       - name: install requirements
         run: |
           pip install -r ./sampleService/src/requirements.txt
-
-      # - name: DEBUG POSTGRES
-      #   run: |
-      #     set PGPASSWORD=pgpswd; psql --username=admin_tracker --password=pgpswd --host=0.0.0.0 --port=5454 --dbname=tracker --command="select * from users"
-      # - name: test
-      #   run: |
-      #     sleep 10
 
       - name: run component tests
         run: |
