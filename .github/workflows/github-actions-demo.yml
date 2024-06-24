@@ -11,10 +11,6 @@ jobs:
       - name: launch services
         run: |
           make sample_run_dev
-
-      - name: init DB
-        run: |
-          python ./sampleService/src/create_sample_db.py
           
       - name: install PyTest
         run: |
@@ -23,6 +19,10 @@ jobs:
       - name: install requirements
         run: |
           pip install -r ./sampleService/src/requirements.txt
+
+      - name: init DB
+        run: |
+          python ./sampleService/src/create_sample_db.py
 
       - name: run component tests
         run: |
