@@ -7,6 +7,8 @@ export PYTHONPATH := $(shell pwd)/sampleService
 
 .PHONY: sample_component_tests
 sample_component_tests:
+	ls
+	echo "$(PWD)"
 	pytest $(COMPONENT_TESTS_DIR)
 
 .PHONY: sample_unit_tests
