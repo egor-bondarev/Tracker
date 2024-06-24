@@ -16,7 +16,7 @@ jobs:
         with:
           composeFile: |
             ./sampleService/docker-compose.testing.yml
-          composeArguments: "--env-file=./sampleService/.env.testing"
+          composeArguments: "--env-file=./sampleService/.env.testing --build"
           
       - name: install PyTest
         run: |
