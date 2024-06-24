@@ -12,10 +12,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run docker-compose
-        uses: hoverkraft-tech/compose-action@v2.0.1
-        with:
-          compose-file: "./sampleService/docker-compose.testing.yml"
+      # - name: Run docker-compose
+      #   uses: hoverkraft-tech/compose-action@v2.0.1
+      #   with:
+      #     compose-file: "./sampleService/docker-compose.testing.yml"
+      - name: test run dev
+        run: |
+          make sample_run_dev
 
       - name: install PyTest
         run: |

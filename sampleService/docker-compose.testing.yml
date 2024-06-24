@@ -19,7 +19,6 @@ services:
       - POSTGRESQL_DATABASE=${DATABASE_DEFAULT_NAME}
       - POSTGRESQL_HOST=${DATABASE_HOST}
       - POSTGRESQL_PORT=${DATABASE_PORT}
-    entrypoint: ["sh", "echo ${POSTGRESQL_PASSWORD}"]
 
   database_init:
     container_name: database_sample_init
