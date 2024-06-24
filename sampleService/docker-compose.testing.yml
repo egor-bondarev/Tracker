@@ -19,6 +19,11 @@ services:
       - POSTGRESQL_DATABASE=${DATABASE_DEFAULT_NAME}
       - POSTGRESQL_HOST=${DATABASE_HOST}
       - POSTGRESQL_PORT=${DATABASE_PORT}
+    healthcheck:
+      test: ["CMD", "pg_isready"]
+      interval: 3s
+      timeout: 5s
+      retries: 5
 
   database_init:
     container_name: database_sample_init
