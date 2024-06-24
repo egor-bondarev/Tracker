@@ -23,7 +23,7 @@ services:
       test: ["CMD", "pg_isready"]
       interval: 3s
       timeout: 5s
-      retries: 5
+      retries: 10
 
   database_init:
     container_name: database_sample_init
