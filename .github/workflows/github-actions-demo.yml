@@ -16,7 +16,7 @@ jobs:
         with:
           composeFile: |
             ./sampleService/docker-compose.testing.yml
-          composeArguments: "--env-file=./sampleService/.env.testing --build"
+          composeArguments: "--env-file=./sampleService/.env.testing --build --force-recreate"
           
       - name: install PyTest
         run: |
