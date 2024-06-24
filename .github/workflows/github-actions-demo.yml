@@ -17,6 +17,10 @@ jobs:
         with:
           compose-file: "./sampleService/docker-compose.testing.yml"
 
+      - name: install PyTest
+        run: |
+          pip install pytest
+
       - name: Execute tests in the running services
         run: |
           make sample_component_tests
