@@ -8,7 +8,7 @@ services:
     volumes:
       - ./src/test.db:/app/test.db
       - postgres_data:/var/lib/postgresql/data
-    env_file: ".env.testing"
+    env_file: "./sampleService/.env.testing"
     ports:
       - 5454:5432
     expose:
@@ -23,7 +23,7 @@ services:
   database_init:
     container_name: database_sample_init
     image: python:3.11
-    env_file: ".env.testing"
+    env_file: "./sampleService/.env.testing"
     volumes:
       - ./src/create_sample_db.py:/app/create_sample_db.py
     environment:
