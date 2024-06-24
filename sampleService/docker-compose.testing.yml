@@ -25,21 +25,21 @@ services:
     #   timeout: 5s
     #   retries: 10
 
-  database_init:
-    container_name: database_sample_init
-    image: python:3.11
-    env_file: ".env.testing"
-    volumes:
-      - ./src/create_sample_db.py:/app/create_sample_db.py
-    environment:
-      - POSTGRESQL_USERNAME=${DATABASE_ADMIN}
-      - POSTGRESQL_PASSWORD=${DATABASE_ADMIN_PASSWORD}
-      - POSTGRESQL_DATABASE=${DATABASE_DEFAULT_NAME}
-      - POSTGRESQL_HOST=${DATABASE_HOST}
-      - POSTGRESQL_PORT=${DATABASE_PORT}
-    depends_on:
-      - database_sample
-    entrypoint: ["sh", "-c", "pip3 install python-dotenv psycopg2 && python /app/create_sample_db.py"]
+  # database_init:
+  #   container_name: database_sample_init
+  #   image: python:3.11
+  #   env_file: ".env.testing"
+  #   volumes:
+  #     - ./src/create_sample_db.py:/app/create_sample_db.py
+  #   environment:
+  #     - POSTGRESQL_USERNAME=${DATABASE_ADMIN}
+  #     - POSTGRESQL_PASSWORD=${DATABASE_ADMIN_PASSWORD}
+  #     - POSTGRESQL_DATABASE=${DATABASE_DEFAULT_NAME}
+  #     - POSTGRESQL_HOST=${DATABASE_HOST}
+  #     - POSTGRESQL_PORT=${DATABASE_PORT}
+  #   depends_on:
+  #     - database_sample
+  #   entrypoint: ["sh", "-c", "pip3 install python-dotenv psycopg2 && python /app/create_sample_db.py"]
   
   sample_service:
     container_name: sample_service
@@ -58,7 +58,7 @@ services:
       - PORT=${SAMPLE_SERVICE_PORT}
     env_file: ".env.testing"
     depends_on:
-      - database_init
+      - database_sample
 
 volumes:
   postgres_data:

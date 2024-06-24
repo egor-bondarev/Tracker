@@ -8,15 +8,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # - name: launch services
-      #   run: |
-      #     make sample_run_dev
       - name: launch services
-        uses: smartlyio/docker-compose-action@v1
-        with:
-          composeFile: |
-            ./sampleService/docker-compose.testing.yml
-          composeArguments: "--env-file=./sampleService/.env.testing --build --force-recreate"
+        run: |
+          make sample_run_dev
+
+      - name: init DB
+        run: |
+          python ./sampleService/src/create_sample_db.py
           
       - name: install PyTest
         run: |
