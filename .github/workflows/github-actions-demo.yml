@@ -1,14 +1,23 @@
-name: Sample Service GitHub Actions Test
-run-name: SampleService
+name: GitHub Actions Demo
+run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
 on: [push]
 jobs:
+  Explore-GitHub-Actions:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
   build:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: run services
+      # - name: Run docker-compose
+      #   uses: hoverkraft-tech/compose-action@v2.0.1
+      #   with:
+      #     compose-file: "./sampleService/docker-compose.testing.yml"
+      #     up-flags: "./sampleService/.env.testing"
+      - name: test run dev
         run: |
           make sample_run_dev
 
@@ -19,15 +28,11 @@ jobs:
       - name: install requirements
         run: |
           pip install -r ./sampleService/src/requirements.txt
+      
+      # - name: debug enc
+      #   run: |
+      #     make sample_print_vars
 
-      - name: run component tests
+      - name: Execute tests in the running services
         run: |
           make sample_component_tests
-
-      - name: run unit tests
-        run: |
-          make sample_unit_tests
-
-      - name: stop services
-        run: |
-          make sample_stop_dev
