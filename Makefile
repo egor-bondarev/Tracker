@@ -8,8 +8,9 @@ export PYTHONPATH := $(shell pwd)/sampleService
 .PHONY: sample_component_tests
 sample_component_tests:
 	ls
+	ls ./sampleService
 	echo "$(PWD)"
-	pytest $(COMPONENT_TESTS_DIR)
+	pytest /home/runner/work/Tracker/Tracker/sampleService/tests/component
 
 .PHONY: sample_unit_tests
 sample_unit_tests:
