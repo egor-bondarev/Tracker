@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  database_sample:
+    image: bitnami/postgresql
+    restart: always
+    container_name: database_sample
+    volumes:
+      - ./src/test.db:/app/test.db
+      - postgres_data:/var/lib/postgresql/data
+    env_file: ".env.testing"
+    ports:
+      - 5454:5432
+    expose:
+      - 5432
+    environment:
+      - POSTGRESQL_USERNAME=${DATABASE_ADMIN}
+      - POSTGRESQL_PASSWORD=${DATABASE_ADMIN_PASSWORD}
+      - POSTGRESQL_DATABASE=${DATABASE_DEFAULT_NAME}
+      - POSTGRESQL_HOST=${DATABASE_HOST}
+      - POSTGRESQL_PORT=${DATABASE_PORT}
+
+  database_init:
+    container_name: database_sample_init
+    image: python:3.11
+    env_file: ".env.testing"
+    volumes:
+      - ./src/create_sample_db.py:/app/create_sample_db.py
+    environment:
+      - POSTGRESQL_USERNAME=${DATABASE_ADMIN}
+      - POSTGRESQL_PASSWORD=${DATABASE_ADMIN_PASSWORD}
+      - POSTGRESQL_DATABASE=${DATABASE_DEFAULT_NAME}
+      - POSTGRESQL_HOST=${DATABASE_HOST}
+      - POSTGRESQL_PORT=${DATABASE_PORT}
+    depends_on:
+      - database_sample
+    entrypoint: ["sh", "-c", "pip3 install python-dotenv psycopg2 && python /app/create_sample_db.py"]
+  
+  sample_service:
+    container_name: sample_service
+    build: ./src
+    restart: always
+    command: "sh -c 'uvicorn main:app --reload --host 0.0.0.0 --port 8000'"
+    volumes:
+      - ./src:/app/src
+    ports:
+      #- "${SAMPLE_SERVICE_PORT}:${SAMPLE_SERVICE_PORT}"
+      - 8000:8000
+    expose:
+      - 8000
+    environment:
+      - HOST=${SAMPLE_SERVICE_HOST}
+      - PORT=${SAMPLE_SERVICE_PORT}
+    env_file: ".env.testing"
+    depends_on:
+      - database_sample
+
+volumes:
+  postgres_data:
