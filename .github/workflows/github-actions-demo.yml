@@ -17,7 +17,7 @@ jobs:
         with:
           compose-file: "./sampleService/docker-compose.testing.yml"
           up-flags: 
-            - env-file: "./sampleService/.env.testing"
+            env-file: "./sampleService/.env.testing"
       # - name: test run dev
       #   run: |
       #     make sample_run_dev
