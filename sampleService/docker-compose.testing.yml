@@ -19,11 +19,11 @@ services:
       - POSTGRESQL_DATABASE=${DATABASE_DEFAULT_NAME}
       - POSTGRESQL_HOST=${DATABASE_HOST}
       - POSTGRESQL_PORT=${DATABASE_PORT}
-    healthcheck:
-      test: ["CMD", "pg_isready"]
-      interval: 3s
-      timeout: 5s
-      retries: 10
+    # healthcheck:
+    #   test: ["CMD", "pg_isready"]
+    #   interval: 3s
+    #   timeout: 5s
+    #   retries: 10
 
   database_init:
     container_name: database_sample_init
@@ -58,7 +58,7 @@ services:
       - PORT=${SAMPLE_SERVICE_PORT}
     env_file: ".env.testing"
     depends_on:
-      - database_sample
+      - database_init
 
 volumes:
   postgres_data:
