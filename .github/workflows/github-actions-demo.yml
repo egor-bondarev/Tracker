@@ -22,7 +22,7 @@ jobs:
 
       - name: DEBUG POSTGRES
         run: |
-          PGPASSWORD=pgpswd psql -U admin_tracker -p 5454 -d tracker -c "select * from users"
+          PGPASSWORD=pgpswd psql -U admin_tracker -h 0.0.0.0 -p 5454 -d tracker -c "select * from users"
 
       - name: run component tests
         run: |
