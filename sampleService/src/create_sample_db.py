@@ -50,7 +50,7 @@ class Settings(BaseSettings):
                     port=self.database_external_port
                 )
                 ready_flag = True
-                print(counter)
+                print(f"Connection attempt #{counter}")
             except(psycopg2.OperationalError) as exc:
                 print(exc)
                 counter += 1
