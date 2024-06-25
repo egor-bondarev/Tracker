@@ -19,6 +19,7 @@ sample_all_tests:
 .PHONY: sample_run_dev
 sample_run_dev:
 	docker-compose -f ./sampleService/docker-compose.testing.yml --env-file=./sampleService/.env.testing up -d --build
+	python ./sampleService/src/create_sample_db.py
 
 .PHONY: sample_stop_dev
 sample_stop_dev:

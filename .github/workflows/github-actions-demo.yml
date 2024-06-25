@@ -20,9 +20,9 @@ jobs:
         run: |
           pip install -r ./sampleService/src/requirements.txt
 
-      - name: init DB
-        run: |
-          python ./sampleService/src/create_sample_db.py
+      # - name: init DB
+      #   run: |
+      #     python ./sampleService/src/create_sample_db.py
 
       - name: run component tests
         run: |
