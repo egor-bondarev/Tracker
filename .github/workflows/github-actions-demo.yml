@@ -7,10 +7,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-
-      - name: launch services
-        run: |
-          make sample_run_dev
           
       - name: install PyTest
         run: |
@@ -19,6 +15,10 @@ jobs:
       - name: install requirements
         run: |
           pip install -r ./sampleService/src/requirements.txt
+
+      - name: launch services
+        run: |
+          make sample_run_dev
 
       # - name: init DB
       #   run: |
