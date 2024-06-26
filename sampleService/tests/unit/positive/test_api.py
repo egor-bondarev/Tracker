@@ -1,9 +1,13 @@
 """ Unit positive tests for Sample Service Rest API. """
 
+import allure
 from src.api import sample
 from tests.helpers import generator
 from tests.unit.helpers import api_helper, db_helper
 
+@allure.epic("API")
+@allure.feature("Unit tests")
+@allure.story("Positive")
 def test_get_user(db_session_local):
     db = db_session_local
 
@@ -15,6 +19,9 @@ def test_get_user(db_session_local):
 
     assert result_username == username
 
+@allure.epic("API")
+@allure.feature("Unit tests")
+@allure.story("Positive")
 def test_post_user(db_session_local):
     db=db_session_local
     username = generator.username()
@@ -24,6 +31,9 @@ def test_post_user(db_session_local):
 
     assert user.username == username
 
+@allure.epic("API")
+@allure.feature("Unit tests")
+@allure.story("Positive")
 def test_post_user_max_length_username(db_session_local):
     db=db_session_local
     username = generator.custom_string(50)
@@ -33,6 +43,9 @@ def test_post_user_max_length_username(db_session_local):
 
     assert user.username == username
 
+@allure.epic("API")
+@allure.feature("Unit tests")
+@allure.story("Positive")
 def test_post_user_short_username(db_session_local):
     db=db_session_local
     username = generator.custom_string(1)

@@ -1,0 +1,56 @@
+name: Sample Service GitHub Actions Demo
+run-name: ${{ github.actor }} is testing out SampleService
+on: [push]
+jobs:
+  sampleService:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+          
+      - name: Install test requirements
+        run: |
+          pip install pytest allure-pytest
+
+      - name: Install requirements
+        run: |
+          pip install -r ./sampleService/src/requirements.txt
+
+      - name: Launch services
+        continue-on-error: false
+        run: |
+          make sample_run_dev
+
+      - name: Run component tests
+        continue-on-error: true
+        run: |
+          make sample_component_tests
+
+      - name: Run unit tests
+        continue-on-error: true
+        run: |
+          make sample_unit_tests
+      
+      - name: Load test report history
+        uses: actions/checkout@v3
+        with:
+          ref: gh-pages
+          path: gh-pages
+
+      - name: Build test report
+        uses: simple-elf/allure-report-action@master
+        with:
+          allure_results: allure-results
+          allure_history: allure-history
+          keep_reports: 20
+
+      - name: Publish test report
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: allure-history
+
+      - name: Stop services
+        run: |
+          make sample_stop_dev

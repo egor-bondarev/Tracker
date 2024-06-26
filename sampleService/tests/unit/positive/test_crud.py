@@ -1,10 +1,15 @@
 """ Unit positive tests for Sample Service database. """
 
+import allure
+
 from src.crud import user
 from tests.helpers import generator
 from src.schemas.schemas import UserCreate
 from tests.unit.helpers import db_helper
 
+@allure.epic("Database")
+@allure.feature("Unit tests")
+@allure.story("Positive")
 def test_create_user(db_session_local):
     db = db_session_local
 
@@ -16,6 +21,9 @@ def test_create_user(db_session_local):
 
     assert new_user.username == result_username
 
+@allure.epic("Database")
+@allure.feature("Unit tests")
+@allure.story("Positive")
 def test_create_user_repeated_username(db_session_local):
     db = db_session_local
     new_user = UserCreate(username=generator.username())
@@ -31,6 +39,9 @@ def test_create_user_repeated_username(db_session_local):
 
     assert username_1 == username_2
 
+@allure.epic("Database")
+@allure.feature("Unit tests")
+@allure.story("Positive")
 def test_get_user(db_session_local):
     db = db_session_local
 
