@@ -31,11 +31,11 @@ jobs:
         run: |
           make sample_unit_tests
       
-      - uses: actions/upload-artifact@master
-        with:
-          name: allure-results
-          path: allure-results
-          retention-days: 20
+      # - uses: actions/upload-artifact@master
+      #   with:
+      #     name: allure-results
+      #     path: allure-results
+      #     retention-days: 20
       
       - name: Load test report history
         uses: actions/checkout@v3
@@ -44,16 +44,16 @@ jobs:
           path: gh-pages
 
       - name: build test report
-        uses: simple-elf/allure-report-action@v1.7
+        uses: simple-elf/allure-report-action@master
         # with:
         #   gh_pages: gh-pages
         #   allure_history: allure-history
         #   allure_results: ./allure-results
-        id: allure-report
+        #id: allure-report
         with:
           allure_results: allure-results
-          gh_pages: gh-pages
-          allure_report: allure-report
+          #gh_pages: gh-pages
+          #allure_report: allure-report
           allure_history: allure-history
           keep_reports: 20
 
@@ -63,7 +63,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
-          publish_dir: allure-results
+          publish_dir: allure-history
 
       - name: stop services
         run: |

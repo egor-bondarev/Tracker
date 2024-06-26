@@ -7,7 +7,7 @@ __pycache__/
 /sampleService/src/test.db
 /allure-results
 /allure-report
-
+/.vscode
 # C extensions
 *.so
 
