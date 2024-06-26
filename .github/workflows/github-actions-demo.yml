@@ -10,23 +10,41 @@ jobs:
           
       - name: install PyTest
         run: |
-          pip install pytest
+          pip install pytest allure-pytest
 
       - name: install requirements
         run: |
           pip install -r ./sampleService/src/requirements.txt
 
       - name: launch services
+        continue-on-error: false
         run: |
           make sample_run_dev
 
       - name: run component tests
+        continue-on-error: true
         run: |
           make sample_component_tests
 
       - name: run unit tests
+        continue-on-error: true
         run: |
           make sample_unit_tests
+
+      - name: build test report
+        uses: simple-elf/allure-report-action@v1.7
+        with:
+          #gh_pages: gh-pages
+          #allure_history: allure-history
+          allure_results: ./allure-results
+
+      - name: Publish test report
+        uses: peaceiris/actions-gh-pages@v3
+        if: always()
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          #publish_branch: gh-pages
+          publish_dir: allure-results
 
       - name: stop services
         run: |

@@ -5,6 +5,7 @@ __pycache__/
 .DS_Store
 /Tracker
 /sampleService/src/test.db
+/allure-results
 
 # C extensions
 *.so

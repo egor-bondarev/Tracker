@@ -6,15 +6,15 @@ export PYTHONPATH := $(shell pwd)/sampleService
 
 .PHONY: sample_component_tests
 sample_component_tests:
-	pytest $(COMPONENT_TESTS_DIR)
+	pytest --alluredir allure-results $(COMPONENT_TESTS_DIR)
 
 .PHONY: sample_unit_tests
 sample_unit_tests:
-	pytest $(UNIT_TESTS_DIR)
+	pytest --alluredir allure-results $(UNIT_TESTS_DIR)
 
 .PHONY: sample_all_tests
 sample_all_tests:
-	pytest $(ALL_TESTS_DIR)
+	pytest --alluredir allure-results $(ALL_TESTS_DIR)
 
 .PHONY: sample_run_dev
 sample_run_dev:
