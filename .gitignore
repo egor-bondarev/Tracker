@@ -6,6 +6,7 @@ __pycache__/
 /Tracker
 /sampleService/src/test.db
 /allure-results
+/allure-report
 
 # C extensions
 *.so
