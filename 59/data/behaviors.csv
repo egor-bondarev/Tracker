@@ -1,0 +1,7 @@
+"Epic","Feature","Story","FAILED","BROKEN","PASSED","SKIPPED","UNKNOWN"
+"API","Component tests","Positive","0","0","6","0","0"
+"API","Component tests","Negative","0","0","13","0","0"
+"API","Unit tests","Negative","0","0","5","0","0"
+"Database","Unit tests","Positive","0","0","3","0","0"
+"API","Unit tests","Positive","0","0","4","0","0"
+"Database","Unit tests","Negative","0","0","4","0","0"
