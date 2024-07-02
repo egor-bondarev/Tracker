@@ -27,22 +27,25 @@ class MainWindow(QMainWindow):
         self.start_button = ControlButton('./desktop_gui/assets/play.png', 'Start task', self)
         self.stop_button = ControlButton('./desktop_gui/assets/stop.png', 'Stop task', self)
 
-        main_window_controls = MainWindowControls(
+        self.main_window_controls = MainWindowControls(
             btn_start=self.start_button,
             btn_finish=self.stop_button,
             task_desc=self.task_desc)
 
         self.task_desc.move(10,10)
+        self.task_desc.setLayout
         self.task_desc.resize(180, 20)
+        self.task_desc.textChanged.connect(
+            lambda: controller.check_description_length(self.main_window_controls))
         self.task_desc.textEdited.connect(
-            lambda: controller.check_description_length(main_window_controls))
+            lambda: controller.check_description_length(self.main_window_controls))
 
         self.start_button.move(58, 40)
-        self.start_button.clicked.connect(lambda: controller.start_task(main_window_controls))
+        self.start_button.clicked.connect(lambda: controller.start_task(self.main_window_controls))
         self.start_button.setEnabled(False)
 
         self.stop_button.move(100, 40)
-        self.stop_button.clicked.connect(lambda: controller.stop_task(main_window_controls))
+        self.stop_button.clicked.connect(lambda: controller.stop_task(self.main_window_controls))
         self.stop_button.setEnabled(False)
 
         self.show()
