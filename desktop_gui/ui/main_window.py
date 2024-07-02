@@ -1,63 +1,51 @@
-from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QPushButton, QTextEdit, QLabel, QLineEdit
-from api.requests import ApiClient
-#from PyQt6 import QtWidgets
+from PyQt5.QtWidgets import QMainWindow, QPushButton, QLineEdit
+from PyQt5.QtGui import QIcon
+from PyQt5.QtCore import QSize
+from controllers.main_controller import MainController
+from helpers.controls_state import MainWindowControls
+
+class ControlButton(QPushButton):
+    def __init__(self, icon_path, tooltip, parent=None):
+        super().__init__(parent)
+
+        self.setIcon(QIcon(icon_path))
+        self.setIconSize(QSize(24, 24))
+        self.setToolTip(tooltip)
+        self.setFixedSize(24, 24)
+        self.setStyleSheet("QPushButton { border: none; }")
 
 class MainWindow(QMainWindow):
 
-        
     def __init__(self):
         super().__init__()
-        self.setWindowTitle('Example')
-        self.setGeometry(100, 100, 300, 100)
-        #self.setBaseSize(100, 200)
+        controller = MainController()
 
-        #self.central_widget = QWidget()
-        #self.setCentralWidget(self.central_widget)
-        #self.layout = QVBoxLayout(self.central_widget)
-        
-        self.username_label = QLabel("username:", self)
-        self.username_label.move(5,8)
-        self.username_label.resize(70,10)
-        #self.layout.addWidget(self.url_label)
-        
-        self.username_input = QLineEdit(self)
-        self.username_input.move(80,5)
-        self.username_input.resize(120, 20)
-        
-        self.username_input.text()
-        #self.layout.addWidget(self.url_input)
-        
-        self.post_button = QPushButton('POST', self)
-        self.post_button.move(200, 2)
-        self.post_button.clicked.connect(self.send_post_request)
-        #self.layout.addWidget(self.get_button)
-        
-        self.id_input = QLineEdit(self)
-        self.id_input.move(5,40)
-        self.id_input.resize(70, 20)
-        
-        
-        
-        
-        self.post_button = QPushButton('GET', self)
-        self.post_button.move(80, 40)
-        self.post_button.clicked.connect(self.send_get_request)
-        
-        self.show_rewult = QTextEdit(self)
-        self.show_rewult.move(200, 40)
-        self.show_rewult.resize(120, 200)
-        
+        self.setWindowTitle('Tracker')
+        self.setGeometry(100, 100, 200, 82)
+
+        self.task_desc = QLineEdit(self)
+        self.start_button = ControlButton('./desktop_gui/assets/play.png', 'Start task', self)
+        self.stop_button = ControlButton('./desktop_gui/assets/stop.png', 'Stop task', self)
+
+        self.main_window_controls = MainWindowControls(
+            btn_start=self.start_button,
+            btn_finish=self.stop_button,
+            task_desc=self.task_desc)
+
+        self.task_desc.move(10,10)
+        self.task_desc.setLayout
+        self.task_desc.resize(180, 20)
+        self.task_desc.textChanged.connect(
+            lambda: controller.check_description_length(self.main_window_controls))
+        self.task_desc.textEdited.connect(
+            lambda: controller.check_description_length(self.main_window_controls))
+
+        self.start_button.move(58, 40)
+        self.start_button.clicked.connect(lambda: controller.start_task(self.main_window_controls))
+        self.start_button.setEnabled(False)
+
+        self.stop_button.move(100, 40)
+        self.stop_button.clicked.connect(lambda: controller.stop_task(self.main_window_controls))
+        self.stop_button.setEnabled(False)
+
         self.show()
-        
-    def send_post_request(self):
-        url = 'http://0.0.0.0:8000/sample/add2db/'
-        data = {"username": self.username_input.text()}  # Replace with actual data as needed
-        response = ApiClient.post(url, data)
-        print(response)
-        #self.response_display.setPlainText(response)
-    
-    def send_get_request(self):
-        url = f'http://0.0.0.0:8000/sample/{self.id_input.text()}'
-        response = ApiClient.get(url)
-        print(response)
-        self.show_rewult.setText(response)
