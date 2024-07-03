@@ -1,4 +1,5 @@
 from helpers.controls_state import MainWindowControls
+import datetime
 
 class MainController():
 
@@ -6,12 +7,18 @@ class MainController():
         # url = 'http://0.0.0.0:8000/sample/add2db/'
         # data = {"username": self.username_input.text()}  # Replace with actual data as needed
         # response = ApiClient.post(url, data)
+        print('Request_1')
+        print(datetime.datetime.now())
 
         self.change_widget_state(main_window_control, True)
 
     def stop_task(self, main_window_control: MainWindowControls):
         # url = f'http://0.0.0.0:8000/sample/{self.id_input.text()}'
         # response = ApiClient.get(url)
+        if main_window_control.btn_start.isEnabled():
+            print('Request_1')
+        else:
+            print('Request_2')
         self.change_widget_state(main_window_control, False)
 
     def change_widget_state(self, main_window_control: MainWindowControls, task_is_active: bool):
