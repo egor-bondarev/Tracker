@@ -3,7 +3,7 @@
 from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, not_
-
+from tzlocal import get_localzone
 from src.models import models
 from src.schemas import schemas
 
@@ -24,7 +24,7 @@ def create_finished_task(db: Session, item: schemas.NewTask) -> models.Task:
         .order_by(desc(models.Task.finish_timestamp)).first()
     try:
         if previous_task.finish_timestamp is None:
-            start_timestamp = datetime.now()
+            start_timestamp = datetime.now(tz=get_localzone())
         else:
             start_timestamp = datetime.strptime(str(previous_task.finish_timestamp),
                                                 "%Y-%m-%d %H:%M:%S.%f")
