@@ -1,8 +1,8 @@
-name: Sample Service GitHub Actions Demo
-run-name: ${{ github.actor }} is testing out SampleService
+name: Record Service GitHub Actions Demo
+run-name: ${{ github.actor }} is testing out Record Service
 on: [push]
 jobs:
-  sampleService:
+  recordService:
     runs-on: ubuntu-latest
 
     steps:
