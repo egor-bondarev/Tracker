@@ -1,20 +1,20 @@
 """ Pydantic models for request validation and response formatting. """
 
+import re
+from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, field_validator
-from src.resources.errors import EmptyDescriptionError, EmptyTimestampError, DescriptionIsTooLong
+from src.resources.errors import EmptyDescriptionError, DescriptionIsTooLong, TimestampFieldError
 
 class TaskBase(BaseModel):
     id: Optional[int] = None
     description: Optional[str] = None
-    timestamp: Optional[str] = None
-    is_task_finished: Optional[bool] = None
+    timestamp: Optional[datetime] = None
     duration: Optional[str] = None
 
 class NewTask(TaskBase):
     description: str
-    timestamp: str
-    is_task_finished: bool
+    timestamp: datetime
 
     @field_validator('description')
     def description_not_empty(v):
@@ -29,23 +29,19 @@ class NewTask(TaskBase):
         return v
 
     @field_validator('timestamp')
-    def timestamp_not_empty(v):
-        if v == '':
-            raise ValueError(EmptyTimestampError.DETAIL.value)
+    def timestamp_is_valid(v):
+        input_value = re.match(r'\d{4}-\d\d-\d\d \d\d:\d\d:\d\d', str(v))[0]
+
+        if datetime.strptime(input_value, '%Y-%m-%d %H:%M:%S').date() < datetime.now().date():
+            raise ValueError(TimestampFieldError.DETAIL.value)
         return v
 
 class FinishedTask(TaskBase):
     id: int
-    timestamp: str
+    timestamp: datetime
 
-    @field_validator('timestamp')
-    def timestamp_not_empty(v):
-        if v == '':
-            raise ValueError(EmptyTimestampError.DETAIL.value)
-        return v
-
-class TaskStartedResponse(TaskBase):
+class TaskStartedResponse(BaseModel):
     id: int
 
-class TaskFinishedResponse(TaskBase):
+class TaskFinishedResponse(BaseModel):
     duration: str

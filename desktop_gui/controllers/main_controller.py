@@ -15,10 +15,9 @@ class MainController():
         ''' New record. '''
 
         data = {"description": main_window_control.task_desc.text(),
-                "timestamp": f"{datetime.now()}",
-                "is_task_finished": "false"
+                "timestamp": f"{datetime.now().replace(microsecond=0)}"
                 }
-        response = requests.post(url=f'{self.url}/add-record/new/', json=data, timeout=5000)
+        response = requests.post(url=f'{self.url}/add-record/new/?is_task_finished=false', json=data, timeout=5000)
 
         self.task_id = response.json()["id"]
         self.change_widget_state(main_window_control, True)
@@ -28,13 +27,12 @@ class MainController():
 
         if main_window_control.btn_start.isEnabled():
             data = {"description": main_window_control.task_desc.text(),
-                "timestamp": f"{datetime.now()}",
-                "is_task_finished": "true"
+                "timestamp": f"{datetime.now().replace(microsecond=0)}"
                 }
-            response = requests.post(url=f'{self.url}/add-record/new/', json=data, timeout=5000)
+            response = requests.post(url=f'{self.url}/add-record/new/?is_task_finished=true', json=data, timeout=5000)
         else:
             data = {"id": self.task_id,
-                "timestamp": f"{datetime.now()}"
+                "timestamp": f"{datetime.now().replace(microsecond=0)}"
                 }
             response = requests.post(url=f'{self.url}/add-record/finish/', json=data, timeout=5000)
         self.change_widget_state(main_window_control, False)

@@ -6,7 +6,7 @@ run_tracker:
 	python ./record_service/src/create_db.py
 
 .PHONY: run_tracker_debug
-run_tracker:
+run_tracker_debug:
 	docker-compose up --build
 
 .PHONY: stop_tracker

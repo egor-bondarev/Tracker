@@ -12,3 +12,10 @@ class Task(Base):
     start_timestamp = Column(DateTime, unique=False, nullable=True)
     finish_timestamp = Column(DateTime, unique=False, nullable=True)
     duration = Column(String, unique=False, nullable=True)
+
+    def __eq__(self, task):
+        return self.id == task.id and \
+            self.description == task.description and \
+                self.start_timestamp == task.start_timestamp and \
+                    self.finish_timestamp == task.finish_timestamp and \
+                        self.duration == task.duration

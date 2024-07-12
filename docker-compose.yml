@@ -22,13 +22,13 @@ services:
     container_name: record_service
     build: ./record_service/src
     restart: always
-    command: "sh -c 'uvicorn main:app --reload --host ${SAMPLE_SERVICE_HOST} --port ${SAMPLE_SERVICE_PORT}'"
+    command: "sh -c 'uvicorn main:app --reload --host ${RECORD_SERVICE_HOST} --port ${RECORD_SERVICE_PORT}'"
     volumes:
       - ./record_service/src:/app/src
     ports:
-      - ${SAMPLE_SERVICE_PORT}:${SAMPLE_SERVICE_PORT}
+      - ${RECORD_SERVICE_PORT}:${RECORD_SERVICE_PORT}
     expose:
-      - ${SAMPLE_SERVICE_PORT}
+      - ${RECORD_SERVICE_PORT}
     env_file: ".env"
     depends_on:
       - tracker_database

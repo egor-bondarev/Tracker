@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     database_admin: str
     database_admin_password: str
     database_default_name: str
-    sample_service_host: str
+    record_service_host: str
     database_external_port: str
     database_name: str
     database_user: str
@@ -49,7 +49,7 @@ class Settings(BaseSettings):
                     dbname=database_name,
                     user=database_user,
                     password=database_password,
-                    host=self.sample_service_host,
+                    host=self.record_service_host,
                     port=self.database_external_port
                 )
                 ready_flag = True

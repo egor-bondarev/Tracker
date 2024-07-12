@@ -13,3 +13,7 @@ class EmptyTimestampError(str, Enum):
 class DescriptionIsTooLong(str, Enum):
     STATUS_CODE = 422
     DETAIL = "Description is too long"
+
+class TimestampFieldError(str, Enum):
+    STATUS_CODE = 422
+    DETAIL = "Timestamp field type is wrong."
