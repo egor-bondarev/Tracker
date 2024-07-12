@@ -1,11 +1,16 @@
 
 import pytest
+import allure
+
 from pydantic import ValidationError
 from tests.helpers import generators, db_helper, asserts
 from src.crud import task
 from src.resources.errors import EmptyDescriptionError, DescriptionIsTooLong, TimestampFieldError
 from src.schemas import schemas
 
+@allure.epic("Unit tests")
+@allure.feature("CRUD")
+@allure.story("Add new task")
 def test_empty_description():
 
     with pytest.raises(ValidationError) as exc:
@@ -13,6 +18,9 @@ def test_empty_description():
 
     asserts.exception_validate_field(exc, 'description', EmptyDescriptionError.DETAIL.value)
 
+@allure.epic("Unit tests")
+@allure.feature("CRUD")
+@allure.story("Add new task")
 def test_missing_description():
 
     with pytest.raises(ValidationError) as exc:
@@ -20,6 +28,9 @@ def test_missing_description():
 
     asserts.exception_field_required(exc, 'description')
 
+@allure.epic("Unit tests")
+@allure.feature("CRUD")
+@allure.story("Add new task")
 def test_missing_timestamp():
 
     with pytest.raises(ValidationError) as exc:
@@ -27,6 +38,9 @@ def test_missing_timestamp():
 
     asserts.exception_field_required(exc, 'timestamp')
 
+@allure.epic("Unit tests")
+@allure.feature("CRUD")
+@allure.story("Add new task")
 def test_wrong_type_description():
 
     with pytest.raises(ValidationError) as exc:
@@ -34,6 +48,9 @@ def test_wrong_type_description():
 
     asserts.exception_wrong_field_type(exc, 'description', 'string')
 
+@allure.epic("Unit tests")
+@allure.feature("CRUD")
+@allure.story("Add new task")
 @pytest.mark.parametrize("data_type", ['string', 'integer'])
 def test_wrong_type_timestamp(data_type):
 
@@ -53,6 +70,9 @@ def test_wrong_type_timestamp(data_type):
         asserts.exception_wrong_field_type_custom_msg(
             exc, 'timestamp', TimestampFieldError.DETAIL.value)
 
+@allure.epic("Unit tests")
+@allure.feature("CRUD")
+@allure.story("Add new task")
 def test_description_repeated_value(db_session_local, remove_test_data):
 
     existed_task = db_helper.add_full_record(db_session_local)
@@ -67,6 +87,9 @@ def test_description_repeated_value(db_session_local, remove_test_data):
     assert existed_task.description == new_task.description
     assert existed_task.id != new_task.id
 
+@allure.epic("Unit tests")
+@allure.feature("CRUD")
+@allure.story("Add new task")
 def test_correct(db_session_local, remove_test_data):
 
     new_item = schemas.NewTask(
@@ -81,6 +104,9 @@ def test_correct(db_session_local, remove_test_data):
     assert str(new_item.timestamp) == result.start_timestamp
     assert result.finish_timestamp is None
 
+@allure.epic("Unit tests")
+@allure.feature("CRUD")
+@allure.story("Add new task")
 @pytest.mark.parametrize(
     "description_value",
     [generators.custom_string(1), generators.custom_string(50)])
@@ -96,6 +122,9 @@ def test_symbols_in_description_field(db_session_local, remove_test_data, descri
     assert str(new_item.timestamp) == result.start_timestamp
     assert result.finish_timestamp is None
 
+@allure.epic("Unit tests")
+@allure.feature("CRUD")
+@allure.story("Add new task")
 def test_more_than_max_symbols_in_description_field():
 
     with pytest.raises(ValidationError) as exc:

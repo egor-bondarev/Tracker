@@ -1,10 +1,15 @@
 
 import pytest
+import allure
+
 from sqlalchemy.exc import ArgumentError
 from tests.helpers import db_helper, generators
 from src.crud import task
 from src.schemas import schemas
 
+@allure.epic("Unit tests")
+@allure.feature("CRUD")
+@allure.story("Finish task")
 def test_correct(create_started_record, remove_test_data):
 
     db_session_local, started_record = create_started_record
@@ -19,6 +24,9 @@ def test_correct(create_started_record, remove_test_data):
     assert started_record.start_timestamp == result.start_timestamp
     assert str(new_item.timestamp) == result.finish_timestamp
 
+@allure.epic("Unit tests")
+@allure.feature("CRUD")
+@allure.story("Finish task")
 def test_id_task_that_already_finished(db_session_local, remove_test_data):
 
     finished_task = db_helper.add_full_record(db_session_local)

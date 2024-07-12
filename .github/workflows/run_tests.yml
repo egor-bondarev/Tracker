@@ -14,22 +14,22 @@ jobs:
 
       - name: Install requirements
         run: |
-          pip install -r ./sampleService/src/requirements.txt
+          pip install -r ./record_service/src/requirements.txt
 
       - name: Launch services
         continue-on-error: false
         run: |
-          make sample_run_dev
+          make run_tracker
 
       - name: Run component tests
         continue-on-error: true
         run: |
-          make sample_component_tests
+          make record_service_component_tests
 
       - name: Run unit tests
         continue-on-error: true
         run: |
-          make sample_unit_tests
+          make record_service_unit_tests
       
       - name: Load test report history
         uses: actions/checkout@v3
@@ -53,4 +53,4 @@ jobs:
 
       - name: Stop services
         run: |
-          make sample_stop_dev
+          make stop_tracker

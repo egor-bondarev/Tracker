@@ -1,9 +1,14 @@
 
-from tests.helpers import generators, db_helper
 import pytest
+import allure
+
+from tests.helpers import generators, db_helper
 from src.crud import task
 from src.schemas import schemas
 
+@allure.epic("Unit tests")
+@allure.feature("CRUD")
+@allure.story("Add new finished task")
 def test_description_repeated_value(db_session_local, remove_test_data):
 
     existed_task = db_helper.add_full_record(db_session_local)
@@ -20,6 +25,9 @@ def test_description_repeated_value(db_session_local, remove_test_data):
     assert existed_task.finish_timestamp == result.start_timestamp
     assert str(new_item.timestamp) == result.finish_timestamp
 
+@allure.epic("Unit tests")
+@allure.feature("CRUD")
+@allure.story("Add new finished task")
 def test_correct(db_session_local,remove_test_data):
 
     new_item = schemas.NewTask(
@@ -33,6 +41,9 @@ def test_correct(db_session_local,remove_test_data):
     assert new_item.description == result.description
     assert str(new_item.timestamp) == result.finish_timestamp
 
+@allure.epic("Unit tests")
+@allure.feature("CRUD")
+@allure.story("Add new finished task")
 @pytest.mark.parametrize(
     "description_value",
     [generators.custom_string(1), generators.custom_string(50)])

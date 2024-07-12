@@ -1,6 +1,7 @@
 
 import uuid
 import pytest
+import allure
 from pydantic import ValidationError
 from fastapi import HTTPException
 
@@ -9,6 +10,9 @@ from src.api import task
 from src.schemas import schemas
 from src.resources.errors import EmptyDescriptionError, DescriptionIsTooLong, TimestampFieldError
 
+@allure.epic("Unit tests")
+@allure.feature("API")
+@allure.story("POST new task")
 def test_missing_timestamp_filed():
 
     with pytest.raises(ValidationError) as exc:
@@ -16,6 +20,9 @@ def test_missing_timestamp_filed():
 
     asserts.exception_field_required(exc, 'timestamp')
 
+@allure.epic("Unit tests")
+@allure.feature("API")
+@allure.story("POST new task")
 def test_missing_description_field():
 
     with pytest.raises(ValidationError) as exc:
@@ -23,6 +30,9 @@ def test_missing_description_field():
 
     asserts.exception_field_required(exc, 'description')
 
+@allure.epic("Unit tests")
+@allure.feature("API")
+@allure.story("POST new task")
 def test_missing_is_task_finished_field(db_session_local):
 
     with pytest.raises(HTTPException) as exc:
@@ -32,6 +42,9 @@ def test_missing_is_task_finished_field(db_session_local):
 
     asserts.exception_missing_field(exc, 'is_task_finished')
 
+@allure.epic("Unit tests")
+@allure.feature("API")
+@allure.story("POST new task")
 def test_empty_description_field():
 
     with pytest.raises(ValidationError) as exc:
@@ -41,6 +54,9 @@ def test_empty_description_field():
 
     asserts.exception_validate_field(exc, 'description', EmptyDescriptionError.DETAIL.value)
 
+@allure.epic("Unit tests")
+@allure.feature("API")
+@allure.story("POST new task")
 @pytest.mark.parametrize("data_type", ['string', 'integer'])
 def test_wrong_type_timestamp_filed(data_type):
 
@@ -60,6 +76,9 @@ def test_wrong_type_timestamp_filed(data_type):
         asserts.exception_wrong_field_type_custom_msg(
             exc, 'timestamp', TimestampFieldError.DETAIL.value)
 
+@allure.epic("Unit tests")
+@allure.feature("API")
+@allure.story("POST new task")
 def test_wrong_type_description_field():
 
     with pytest.raises(ValidationError) as exc:
@@ -69,6 +88,9 @@ def test_wrong_type_description_field():
 
     asserts.exception_wrong_field_type(exc, 'description', 'string')
 
+@allure.epic("Unit tests")
+@allure.feature("API")
+@allure.story("POST new task")
 def test_wrong_type_is_task_finished_field(db_session_local):
 
     with pytest.raises(HTTPException) as exc:
@@ -78,6 +100,9 @@ def test_wrong_type_is_task_finished_field(db_session_local):
 
     asserts.exception_missing_field(exc, 'is_task_finished')
 
+@allure.epic("Unit tests")
+@allure.feature("API")
+@allure.story("POST new task")
 @pytest.mark.parametrize("is_task_finished", [True, False])
 @pytest.mark.parametrize(
     "description_value",
@@ -101,6 +126,9 @@ def test_description_field(db_session_local, is_task_finished, description_value
         assert str(new_task.timestamp) == result.start_timestamp
         assert result.finish_timestamp is None
 
+@allure.epic("Unit tests")
+@allure.feature("API")
+@allure.story("POST new task")
 def test_more_than_max_symbols_in_description_field():
 
     with pytest.raises(ValidationError) as exc:
@@ -110,6 +138,9 @@ def test_more_than_max_symbols_in_description_field():
 
     asserts.exception_validate_field(exc, 'description', DescriptionIsTooLong.DETAIL.value)
 
+@allure.epic("Unit tests")
+@allure.feature("API")
+@allure.story("POST new task")
 def test_all_is_correct(db_session_local, remove_test_data):
 
     description = str(uuid.uuid4())
@@ -126,6 +157,9 @@ def test_all_is_correct(db_session_local, remove_test_data):
     assert str(start_timestamp) == result.start_timestamp
     assert result.finish_timestamp is None
 
+@allure.epic("Unit tests")
+@allure.feature("API")
+@allure.story("POST new task")
 def test_description_repeated_value(db_session_local, remove_test_data):
 
     existed_record = db_helper.add_full_record(db_session_local)

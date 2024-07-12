@@ -1,8 +1,12 @@
 import pytest
+import allure
 from fastapi import status
 from tests.helpers import api_helper, generators, db_helper, asserts
 from src.resources.errors import TimestampFieldError
 
+@allure.epic("Component tests")
+@allure.feature("API")
+@allure.story("POST new task")
 @pytest.mark.parametrize("is_task_finished", [True, False])
 def test_new_task_missing_timestamp_field(is_task_finished):
 
@@ -11,6 +15,9 @@ def test_new_task_missing_timestamp_field(is_task_finished):
 
     asserts.api_field_required("timestamp", response)
 
+@allure.epic("Component tests")
+@allure.feature("API")
+@allure.story("POST new task")
 @pytest.mark.parametrize("is_task_finished", [True, False])
 def test_new_task_missing_description_field(is_task_finished):
 
@@ -19,6 +26,9 @@ def test_new_task_missing_description_field(is_task_finished):
 
     asserts.api_field_required("description", response)
 
+@allure.epic("Component tests")
+@allure.feature("API")
+@allure.story("POST new task")
 def test_new_task_missing_is_task_finished_flag():
 
     response = api_helper.post_new_task_without_is_task_finished_flag(
@@ -26,6 +36,9 @@ def test_new_task_missing_is_task_finished_flag():
 
     asserts.api_field_required("is_task_finished", response)
 
+@allure.epic("Component tests")
+@allure.feature("API")
+@allure.story("POST new task")
 @pytest.mark.parametrize("is_task_finished", [True, False])
 def test_new_task_empty_timestamp_field(is_task_finished):
 
@@ -34,6 +47,9 @@ def test_new_task_empty_timestamp_field(is_task_finished):
 
     asserts.api_wrong_field_type("timestamp", response, "datetime")
 
+@allure.epic("Component tests")
+@allure.feature("API")
+@allure.story("POST new task")
 @pytest.mark.parametrize("is_task_finished", [True, False])
 def test_new_task_empty_description_field(is_task_finished):
 
@@ -44,6 +60,9 @@ def test_new_task_empty_description_field(is_task_finished):
     assert "Description can't be empty" in response.json()["detail"][0]["msg"]
     assert "description" in response.json()["detail"][0]["loc"]
 
+@allure.epic("Component tests")
+@allure.feature("API")
+@allure.story("POST new task")
 def test_new_task_empty_is_task_finished_field():
 
     response = api_helper.post_new_task_custom_body({
@@ -52,6 +71,9 @@ def test_new_task_empty_is_task_finished_field():
 
     asserts.api_wrong_field_type("is_task_finished", response, "boolean")
 
+@allure.epic("Component tests")
+@allure.feature("API")
+@allure.story("POST new task")
 @pytest.mark.parametrize("data_type", ['string', 'integer'])
 @pytest.mark.parametrize("is_task_finished", [True, False])
 def test_new_task_api_wrong_field_type_timestamp_filed(data_type, is_task_finished):
@@ -70,6 +92,9 @@ def test_new_task_api_wrong_field_type_timestamp_filed(data_type, is_task_finish
         asserts.api_wrong_field_type_custom_msg(
             "timestamp", response, TimestampFieldError.DETAIL.value)
 
+@allure.epic("Component tests")
+@allure.feature("API")
+@allure.story("POST new task")
 @pytest.mark.parametrize("is_task_finished", [True, False])
 def test_new_task_api_wrong_field_type_description_field(is_task_finished):
 
@@ -79,6 +104,9 @@ def test_new_task_api_wrong_field_type_description_field(is_task_finished):
 
     asserts.api_wrong_field_type("description", response, "string")
 
+@allure.epic("Component tests")
+@allure.feature("API")
+@allure.story("POST new task")
 def test_new_task_api_wrong_field_type_is_task_finished_field():
 
     response = api_helper.post_new_task_wrong_is_task_finished_flag(
@@ -86,6 +114,9 @@ def test_new_task_api_wrong_field_type_is_task_finished_field():
 
     asserts.api_wrong_field_type("is_task_finished", response, "boolean")
 
+@allure.epic("Component tests")
+@allure.feature("API")
+@allure.story("POST new task")
 @pytest.mark.parametrize("is_task_finished", [True, False])
 @pytest.mark.parametrize("description", [generators.custom_string(1), generators.custom_string(50)])
 def test_new_task_description_field(is_task_finished, description, remove_test_data, db_session_local):
@@ -99,6 +130,9 @@ def test_new_task_description_field(is_task_finished, description, remove_test_d
     assert response.status_code == status.HTTP_200_OK
     assert task_id is not None
 
+@allure.epic("Component tests")
+@allure.feature("API")
+@allure.story("POST new task")
 @pytest.mark.parametrize("is_task_finished", [True, False])
 def test_new_task_more_than_max_symbols_in_description_field(is_task_finished):
 
@@ -109,6 +143,9 @@ def test_new_task_more_than_max_symbols_in_description_field(is_task_finished):
     assert "Description is too long" in response.json()["detail"][0]["msg"]
     assert "description" in response.json()["detail"][0]["loc"]
 
+@allure.epic("Component tests")
+@allure.feature("API")
+@allure.story("POST new task")
 @pytest.mark.parametrize("is_task_finished", [True, False])
 def test_new_task_description_repeated_value(is_task_finished, remove_test_data, db_session_local):
 
@@ -128,6 +165,9 @@ def test_new_task_description_repeated_value(is_task_finished, remove_test_data,
     assert response_second.status_code == status.HTTP_200_OK
     assert task_id_second != task_id_first
 
+@allure.epic("Component tests")
+@allure.feature("API")
+@allure.story("POST finish task")
 def test_post_finished_task_is_ok(create_started_record):
 
     _, task = create_started_record
@@ -136,6 +176,9 @@ def test_post_finished_task_is_ok(create_started_record):
     assert response.status_code == status.HTTP_200_OK
     assert response.json()['duration'] is not None
 
+@allure.epic("Component tests")
+@allure.feature("API")
+@allure.story("POST finish task")
 def test_finish_task_missing_id_field():
 
     response = api_helper.post_finish_task_custom_body(
@@ -143,12 +186,18 @@ def test_finish_task_missing_id_field():
 
     asserts.api_field_required("id", response)
 
+@allure.epic("Component tests")
+@allure.feature("API")
+@allure.story("POST finish task")
 def test_finish_task_missing_timestamp_field():
 
     response = api_helper.post_finish_task_custom_body({"id": f"{generators.number()}"})
 
     asserts.api_field_required("timestamp", response)
 
+@allure.epic("Component tests")
+@allure.feature("API")
+@allure.story("POST finish task")
 def test_finish_task_api_wrong_field_type_id_field():
 
     response = api_helper.post_finish_task_custom_body(
@@ -156,6 +205,9 @@ def test_finish_task_api_wrong_field_type_id_field():
 
     asserts.api_wrong_field_type("id", response, "integer")
 
+@allure.epic("Component tests")
+@allure.feature("API")
+@allure.story("POST finish task")
 def test_finish_task_api_wrong_field_type_timestamp_field():
 
     response = api_helper.post_finish_task_custom_body(
@@ -163,6 +215,9 @@ def test_finish_task_api_wrong_field_type_timestamp_field():
 
     asserts.api_wrong_field_type("timestamp", response, "datetime")
 
+@allure.epic("Component tests")
+@allure.feature("API")
+@allure.story("POST finish task")
 def test_finish_task_not_existed_id(create_started_record):
 
     db_session, task = create_started_record
@@ -172,6 +227,9 @@ def test_finish_task_not_existed_id(create_started_record):
 
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
+@allure.epic("Component tests")
+@allure.feature("API")
+@allure.story("POST finish task")
 def test_finish_task_already_finished_task_id_field(db_session_local, remove_test_data):
 
     existed_task = db_helper.add_full_record(db_session_local)
