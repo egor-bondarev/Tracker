@@ -1,46 +1,30 @@
+COMPONENT_TESTS_DIR = ./record_service/tests/component
+UNIT_TESTS_DIR = ./record_service/tests/unit
+ALL_TESTS_DIR = ./record_service/tests
 
-COMPONENT_TESTS_DIR = ./sampleService/tests/component
-UNIT_TESTS_DIR = ./sampleService/tests/unit
-ALL_TESTS_DIR = ./sampleService/tests
-LOAD_TESTS_DIR = ./sampleService/tests/load
-export PYTHONPATH := $(shell pwd)/sampleService
-export HOST := 0.0.0.0
-export PORT := 8000
+export PYTHONPATH := $(shell pwd)
 
-.PHONY: sample_component_tests
-sample_component_tests:
+.PHONY: run_tracker
+run_tracker:
+	docker-compose up -d --build
+	python ./record_service/src/create_db.py
+
+.PHONY: run_tracker_debug
+run_tracker_debug:
+	docker-compose up --build
+
+.PHONY: stop_tracker
+stop_tracker:
+	docker-compose down
+
+.PHONY: record_service_component_tests
+record_service_component_tests:
 	pytest --alluredir allure-results $(COMPONENT_TESTS_DIR)
 
-.PHONY: sample_unit_tests
-sample_unit_tests:
+.PHONY: record_service_unit_tests
+record_service_unit_tests:
 	pytest --alluredir allure-results $(UNIT_TESTS_DIR)
 
-.PHONY: sample_all_tests
-sample_all_tests:
+.PHONY: record_service_all_tests
+record_service_all_tests:
 	pytest --alluredir allure-results $(ALL_TESTS_DIR)
-
-.PHONY: run_load_test_post_user
-run_load_test_post_user:
-	K6_WEB_DASHBOARD_EXPORT=report.html K6_WEB_DASHBOARD=true K6_WEB_DASHBOARD_OPEN=true k6 run --vus ${USERS_COUNT} --duration ${DURATION} $(LOAD_TESTS_DIR)/post-users.js
-
-.PHONY: run_load_test_get_one_user
-run_load_test_get_one_user:
-	K6_WEB_DASHBOARD_EXPORT=report.html K6_WEB_DASHBOARD=true K6_WEB_DASHBOARD_OPEN=true k6 run --vus ${USERS_COUNT} --duration ${DURATION} $(LOAD_TESTS_DIR)/get-one-user.js
-
-.PHONY: sample_run_dev
-sample_run_dev:
-	docker-compose -f ./sampleService/docker-compose.testing.yml --env-file=./sampleService/.env.testing up -d --build
-	python ./sampleService/src/create_sample_db.py
-
-.PHONY: sample_stop_dev
-sample_stop_dev:
-	docker-compose -f ./sampleService/docker-compose.testing.yml --env-file=./sampleService/.env.testing down
-
-.PHONY: sample_print_vars
-sample_print_vars: 
-	echo $(PYTHONPATH)
-	echo $(POSTGRESQL_PASSWORD)
-
-.PHONY: test
-test:
-	echo "${BAR}"

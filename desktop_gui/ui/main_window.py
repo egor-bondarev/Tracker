@@ -3,6 +3,7 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import QSize
 from controllers.main_controller import MainController
 from helpers.controls_state import MainWindowControls
+from helpers.settings import Settings
 
 class ControlButton(QPushButton):
     def __init__(self, icon_path, tooltip, parent=None):
@@ -18,7 +19,8 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        controller = MainController()
+        settings = Settings()
+        controller = MainController(settings.get_url())
 
         self.setWindowTitle('Tracker')
         self.setGeometry(100, 100, 200, 82)
@@ -33,7 +35,6 @@ class MainWindow(QMainWindow):
             task_desc=self.task_desc)
 
         self.task_desc.move(10,10)
-        self.task_desc.setLayout
         self.task_desc.resize(180, 20)
         self.task_desc.textChanged.connect(
             lambda: controller.check_description_length(self.main_window_controls))

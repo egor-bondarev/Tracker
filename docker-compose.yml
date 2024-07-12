@@ -1,0 +1,36 @@
+services:
+  tracker_database:
+    image: bitnami/postgresql
+    restart: always
+    container_name: tracker_database
+    volumes:
+      - ./src/test.db:/app/test.db
+      - postgres_data:/var/lib/postgresql/data
+    env_file: ".env"
+    ports:
+      - ${DATABASE_EXTERNAL_PORT}:${DATABASE_PORT}
+    expose:
+      - ${DATABASE_PORT}
+    environment:
+      - POSTGRESQL_USERNAME=${DATABASE_ADMIN}
+      - POSTGRESQL_PASSWORD=${DATABASE_ADMIN_PASSWORD}
+      - POSTGRESQL_DATABASE=${DATABASE_DEFAULT_NAME}
+      - POSTGRESQL_HOST=${DATABASE_HOST}
+      - POSTGRESQL_PORT=${DATABASE_PORT}
+
+  record_service:
+    container_name: record_service
+    build: ./record_service/src
+    restart: always
+    command: "sh -c 'uvicorn main:app --reload --host ${RECORD_SERVICE_HOST} --port ${RECORD_SERVICE_PORT}'"
+    volumes:
+      - ./record_service/src:/app/src
+    ports:
+      - ${RECORD_SERVICE_PORT}:${RECORD_SERVICE_PORT}
+    expose:
+      - ${RECORD_SERVICE_PORT}
+    env_file: ".env"
+    depends_on:
+      - tracker_database
+volumes:
+  postgres_data:
