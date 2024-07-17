@@ -92,3 +92,25 @@ query GetTasksInPeriod($startDate: DateTime!, $endDate: DateTime!) {
     }
 }
 ```
+
+## Run autotests
+
+- **Run application**: 
+    ```
+    make run_tracker
+    ```
+
+- **Run component tests for record service**: 
+    ```
+    make record_service_component_tests
+    ```
+
+- **Run unit tests for record service**: 
+    ```
+    make record_service_unit_tests
+    ```
+
+- **Run all tests for record service**: 
+    ```
+    make record_service_all_tests
+    ```
