@@ -62,29 +62,32 @@ const TasksTable: React.FC = () => {
 
   return (
     <div>
-      <div>
-        <label>
-          Start Date:
-          <input
-            type="string"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-          />
-        </label>
-        <label>
-          End Date:
-          <input
-            type="string"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-          />
-        </label>
-        <button onClick={fetchGraphQLData}>Show Tasks</button>
+      <div className='App-page-result-settings'>
+      <div className='App-page-result-settings-search'>
+        <input
+          input-data-placeholder="true"
+          placeholder="Set start date"
+          className='App-page-result-settings-search-input-start-date'
+          id='start-date-input'
+          type="string"
+          value={startDate}
+          onChange={(e) => setStartDate(e.target.value)}
+        />
+        <input
+          input-data-placeholder="true"
+          placeholder="Set finish date"
+          className='App-page-result-settings-search-input-finish-date'
+          type="string"
+          value={endDate}
+          onChange={(e) => setEndDate(e.target.value)}
+        />
+        <button className='App-page-result-settings-search-button' onClick={fetchGraphQLData}>Search</button>
       </div>
-      <table>
+    </div>
+    <div className="App-page-result-table-container">
+      <table className="App-page-result-table">
         <thead>
           <tr>
-            <th>ID</th>
             <th>Description</th>
             <th>Start Timestamp</th>
             <th>Finish Timestamp</th>
@@ -94,7 +97,6 @@ const TasksTable: React.FC = () => {
         <tbody>
           {tasks.map((task) => (
             <tr key={task.id}>
-              <td>{task.id}</td>
               <td>{task.description}</td>
               <td>{task.startTimestamp}</td>
               <td>{task.finishTimestamp}</td>
@@ -104,6 +106,8 @@ const TasksTable: React.FC = () => {
         </tbody>
       </table>
     </div>
+    </div>
+    
   );
 };
 
