@@ -1,6 +1,5 @@
 // TasksTable.tsx
-import DatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css';
+// import 'react-datepicker/dist/react-datepicker.css';
 
 import Datetime from 'react-datetime';
 import 'react-datetime/css/react-datetime.css';
@@ -63,23 +62,18 @@ const TasksTable: React.FC = () => {
     }
   };
 
-
-  /** */
   const [selectedStartDateTime, setSelectedStartDateTime] = useState<string | Date | Moment | undefined>();
   const [inputStartValue, setInputStartValue] = useState<string>('');
   const [isStartPickerOpen, setIsStartPickerOpen] = useState<boolean>(false);
+  const startDatePickerRef = useRef<HTMLInputElement>(null);
 
   const [selectedFinishDateTime, setSelectedFinishDateTime] = useState<string | Date | Moment | undefined>();
   const [inputFinishValue, setInputFinishValue] = useState<string>('');
   const [isFinishPickerOpen, setIsFinishPickerOpen] = useState<boolean>(false);
-
-  const startDatePickerRef = useRef<HTMLInputElement>(null);
   const finishDatePickerRef = useRef<HTMLInputElement>(null);
 
   const containerStartDateRef = useRef<HTMLDivElement>(null);
   const containerFinishDateRef = useRef<HTMLDivElement>(null);
-
-
 
   function handleStartDateChange(date: string | Moment){
     setSelectedStartDateTime(date);
@@ -122,22 +116,9 @@ const TasksTable: React.FC = () => {
     }
   };
 
-  // function openCalendar() {
-  //   if (datePickerRef.current) {
-  //     datePickerRef.current.click();
-  //   }
-  // };
-
-  // const test = () => {
-  // };
-  
-  /** */
-
   const handleFetchTasks = () => {
     fetchGraphQLData();
   };
-  // const [selectedDateTime, setSelectedDateTime] = useState<string | Date | Moment | undefined>();
-  // const datePickerRef = useRef<Datetime>(null);
 
   useEffect(() => {
     document.addEventListener('mousedown', handleClickOutside);
@@ -162,17 +143,15 @@ const TasksTable: React.FC = () => {
     <div>
       <div className='App-page-result-settings'>
         <div className='App-page-result-settings-search'>
-          <div ref={containerStartDateRef}>
+          <div ref={containerStartDateRef} style={{ position: 'relative' }}>
             <Datetime
               value={selectedStartDateTime}
               onChange={handleStartDateChange}
-              // onChange={(date: Date) => setSelectedDate(date)}
               renderInput={(props, openCalendar) => (
                 <CustomInputDateTime
                   value={inputStartValue}
                   onClick={openStartDateCalendar}
                   onChange={handleInputStartChange}
-                  //onClick={test}
                   className='App-page-result-settings-search-input-start-date'
                   ref={startDatePickerRef}
                 />
@@ -181,32 +160,22 @@ const TasksTable: React.FC = () => {
               className='rdtPickerStartDateTime'
             />
           </div>
-          <div className="custom-finish-datetime-picker" ref={containerFinishDateRef}>
+          <div ref={containerFinishDateRef} style={{ position: 'relative' }}>
             <Datetime
-                value={selectedFinishDateTime}
-                onChange={handleFinishDateChange}
-                // onChange={(date: Date) => setSelectedDate(date)}
-                renderInput={(props, openCalendar) => (
-                  <CustomInputDateTime
-                    value={inputFinishValue}
-                    onClick={openFinishDateCalendar}
-                    onChange={handleInputFinishChange}
-                    //onClick={test}
-                    className='App-page-result-settings-search-input-finish-date'
-                    ref={finishDatePickerRef}
-                  />
-                )}
-                open={isFinishPickerOpen}
-                className='rdtPickerFinishDateTime'
-              />
-            {/* <input
-              input-data-placeholder="true"
-              placeholder="Set finish date"
-              className='App-page-result-settings-search-input-finish-date'
-              type="string"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-            /> */}
+              value={selectedFinishDateTime}
+              onChange={handleFinishDateChange}
+              renderInput={(props, openCalendar) => (
+                <CustomInputDateTime
+                  value={inputFinishValue}
+                  onClick={openFinishDateCalendar}
+                  onChange={handleInputFinishChange}
+                  className='App-page-result-settings-search-input-finish-date'
+                  ref={finishDatePickerRef}
+                />
+              )}
+              open={isFinishPickerOpen}
+              className='rdtPickerFinishDateTime'
+            />
           </div>
           <div>
             <button className='App-page-result-settings-search-button' onClick={fetchGraphQLData}>Search</button>
