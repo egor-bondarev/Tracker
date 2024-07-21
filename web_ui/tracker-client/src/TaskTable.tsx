@@ -1,11 +1,9 @@
 // TasksTable.tsx
-// import 'react-datepicker/dist/react-datepicker.css';
-
+import moment, { Moment } from 'moment';
 import Datetime from 'react-datetime';
 import 'react-datetime/css/react-datetime.css';
 import CustomInputDateTime from './InputDateField';
 import React, { useState, useRef, useEffect, ChangeEvent } from 'react';
-import { Moment } from 'moment';
 interface Task {
     id: number;
     description: string;
@@ -62,12 +60,12 @@ const TasksTable: React.FC = () => {
     }
   };
 
-  const [selectedStartDateTime, setSelectedStartDateTime] = useState<string | Date | Moment | undefined>();
+  const [selectedStartDateTime, setSelectedStartDateTime] = useState<Moment | string>('');
   const [inputStartValue, setInputStartValue] = useState<string>('');
   const [isStartPickerOpen, setIsStartPickerOpen] = useState<boolean>(false);
   const startDatePickerRef = useRef<HTMLInputElement>(null);
 
-  const [selectedFinishDateTime, setSelectedFinishDateTime] = useState<string | Date | Moment | undefined>();
+  const [selectedFinishDateTime, setSelectedFinishDateTime] = useState<Moment | string>('');
   const [inputFinishValue, setInputFinishValue] = useState<string>('');
   const [isFinishPickerOpen, setIsFinishPickerOpen] = useState<boolean>(false);
   const finishDatePickerRef = useRef<HTMLInputElement>(null);
@@ -75,14 +73,24 @@ const TasksTable: React.FC = () => {
   const containerStartDateRef = useRef<HTMLDivElement>(null);
   const containerFinishDateRef = useRef<HTMLDivElement>(null);
 
-  function handleStartDateChange(date: string | Moment){
-    setSelectedStartDateTime(date);
-    setInputStartValue(date.toString());
+  const handleStartDateChange = (date: Moment | string) => {
+    if (moment.isMoment(date)) {
+      setSelectedStartDateTime(date);
+      setInputStartValue(date.format('YYYY-MM-DD HH:mm:00'));
+    } else {
+      setSelectedStartDateTime('');
+      setInputStartValue('');
+    }
   };
 
-  const handleFinishDateChange = (date: string | Moment) => {
-    setSelectedFinishDateTime(date);
-    setInputFinishValue(date.toString());
+  const handleFinishDateChange = (date: Moment | string) => {
+    if (moment.isMoment(date)) {
+      setSelectedFinishDateTime(date);
+      setInputFinishValue(date.format('YYYY-MM-DD HH:mm:00'));
+    } else {
+      setSelectedFinishDateTime('');
+      setInputFinishValue('');
+    }
   };
 
   const handleInputStartChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -93,21 +101,21 @@ const TasksTable: React.FC = () => {
     setInputFinishValue(event.target.value);
   };
 
-  function openStartDateCalendar() {
+  const openStartDateCalendar = () => {
     setIsStartPickerOpen(true);
   };
-  function openFinishDateCalendar() {
+  const openFinishDateCalendar = () => {
     setIsFinishPickerOpen(true);
   };
 
-  function closeStartDateCalendar() {
+  const closeStartDateCalendar = () => {
     setIsStartPickerOpen(false);
   };
-  function closeFinishDateCalendar() {
+  const closeFinishDateCalendar = () => {
     setIsFinishPickerOpen(false);
   };
 
-  function handleClickOutside(event: MouseEvent) {
+  const handleClickOutside = (event: MouseEvent) => {
     if (containerStartDateRef.current && !containerStartDateRef.current.contains(event.target as Node)) {
       closeStartDateCalendar();
     }
@@ -147,6 +155,8 @@ const TasksTable: React.FC = () => {
             <Datetime
               value={selectedStartDateTime}
               onChange={handleStartDateChange}
+              dateFormat="YYYY-MM-DD"
+              timeFormat="HH:mm:00"
               renderInput={(props, openCalendar) => (
                 <CustomInputDateTime
                   value={inputStartValue}
@@ -164,6 +174,8 @@ const TasksTable: React.FC = () => {
             <Datetime
               value={selectedFinishDateTime}
               onChange={handleFinishDateChange}
+              dateFormat="DD/MM/YYYY"
+              timeFormat="HH:mm"
               renderInput={(props, openCalendar) => (
                 <CustomInputDateTime
                   value={inputFinishValue}
