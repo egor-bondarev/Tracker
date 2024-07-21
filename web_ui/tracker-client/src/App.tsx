@@ -5,7 +5,7 @@ import { GET_TASK_IN_PERIOD } from './queries';
 import logo from './logo.svg';
 import './App.css';
 import DatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css';
+// import 'react-datepicker/dist/react-datepicker.css';
 import TasksTable from './TaskTable';
 
 const App: React.FC = () => {

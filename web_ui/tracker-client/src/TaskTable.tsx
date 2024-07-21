@@ -1,5 +1,12 @@
 // TasksTable.tsx
-import React, { useState } from 'react';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+
+import Datetime from 'react-datetime';
+import 'react-datetime/css/react-datetime.css';
+import CustomInputDateTime from './InputDateField';
+import React, { useState, useRef, useEffect, ChangeEvent } from 'react';
+import { Moment } from 'moment';
 interface Task {
     id: number;
     description: string;
@@ -56,34 +63,156 @@ const TasksTable: React.FC = () => {
     }
   };
 
+
+  /** */
+  const [selectedStartDateTime, setSelectedStartDateTime] = useState<string | Date | Moment | undefined>();
+  const [inputStartValue, setInputStartValue] = useState<string>('');
+  const [isStartPickerOpen, setIsStartPickerOpen] = useState<boolean>(false);
+
+  const [selectedFinishDateTime, setSelectedFinishDateTime] = useState<string | Date | Moment | undefined>();
+  const [inputFinishValue, setInputFinishValue] = useState<string>('');
+  const [isFinishPickerOpen, setIsFinishPickerOpen] = useState<boolean>(false);
+
+  const startDatePickerRef = useRef<HTMLInputElement>(null);
+  const finishDatePickerRef = useRef<HTMLInputElement>(null);
+
+  const containerStartDateRef = useRef<HTMLDivElement>(null);
+  const containerFinishDateRef = useRef<HTMLDivElement>(null);
+
+
+
+  function handleStartDateChange(date: string | Moment){
+    setSelectedStartDateTime(date);
+    setInputStartValue(date.toString());
+  };
+
+  const handleFinishDateChange = (date: string | Moment) => {
+    setSelectedFinishDateTime(date);
+    setInputFinishValue(date.toString());
+  };
+
+  const handleInputStartChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setInputStartValue(event.target.value);
+  };
+
+  const handleInputFinishChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setInputFinishValue(event.target.value);
+  };
+
+  function openStartDateCalendar() {
+    setIsStartPickerOpen(true);
+  };
+  function openFinishDateCalendar() {
+    setIsFinishPickerOpen(true);
+  };
+
+  function closeStartDateCalendar() {
+    setIsStartPickerOpen(false);
+  };
+  function closeFinishDateCalendar() {
+    setIsFinishPickerOpen(false);
+  };
+
+  function handleClickOutside(event: MouseEvent) {
+    if (containerStartDateRef.current && !containerStartDateRef.current.contains(event.target as Node)) {
+      closeStartDateCalendar();
+    }
+    if (containerFinishDateRef.current && !containerFinishDateRef.current.contains(event.target as Node)) {
+      closeFinishDateCalendar();
+    }
+  };
+
+  // function openCalendar() {
+  //   if (datePickerRef.current) {
+  //     datePickerRef.current.click();
+  //   }
+  // };
+
+  // const test = () => {
+  // };
+  
+  /** */
+
   const handleFetchTasks = () => {
     fetchGraphQLData();
+  };
+  // const [selectedDateTime, setSelectedDateTime] = useState<string | Date | Moment | undefined>();
+  // const datePickerRef = useRef<Datetime>(null);
+
+  useEffect(() => {
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const updatePickerPosition = (inputRef: React.RefObject<HTMLInputElement>, pickerClass: string) => {
+    if (inputRef.current) {
+      const inputRect = inputRef.current.getBoundingClientRect();
+      const pickerElement = document.querySelector(`.${pickerClass}`) as HTMLElement;
+      if (pickerElement) {
+        pickerElement.style.position = 'absolute';
+        pickerElement.style.top = `${inputRect.bottom + window.scrollY}px`;
+        pickerElement.style.left = `${inputRect.left + window.scrollX}px`;
+      }
+    }
   };
 
   return (
     <div>
       <div className='App-page-result-settings'>
-      <div className='App-page-result-settings-search'>
-        <input
-          input-data-placeholder="true"
-          placeholder="Set start date"
-          className='App-page-result-settings-search-input-start-date'
-          id='start-date-input'
-          type="string"
-          value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
-        />
-        <input
-          input-data-placeholder="true"
-          placeholder="Set finish date"
-          className='App-page-result-settings-search-input-finish-date'
-          type="string"
-          value={endDate}
-          onChange={(e) => setEndDate(e.target.value)}
-        />
-        <button className='App-page-result-settings-search-button' onClick={fetchGraphQLData}>Search</button>
+        <div className='App-page-result-settings-search'>
+          <div ref={containerStartDateRef}>
+            <Datetime
+              value={selectedStartDateTime}
+              onChange={handleStartDateChange}
+              // onChange={(date: Date) => setSelectedDate(date)}
+              renderInput={(props, openCalendar) => (
+                <CustomInputDateTime
+                  value={inputStartValue}
+                  onClick={openStartDateCalendar}
+                  onChange={handleInputStartChange}
+                  //onClick={test}
+                  className='App-page-result-settings-search-input-start-date'
+                  ref={startDatePickerRef}
+                />
+              )}
+              open={isStartPickerOpen}
+              className='rdtPickerStartDateTime'
+            />
+          </div>
+          <div className="custom-finish-datetime-picker" ref={containerFinishDateRef}>
+            <Datetime
+                value={selectedFinishDateTime}
+                onChange={handleFinishDateChange}
+                // onChange={(date: Date) => setSelectedDate(date)}
+                renderInput={(props, openCalendar) => (
+                  <CustomInputDateTime
+                    value={inputFinishValue}
+                    onClick={openFinishDateCalendar}
+                    onChange={handleInputFinishChange}
+                    //onClick={test}
+                    className='App-page-result-settings-search-input-finish-date'
+                    ref={finishDatePickerRef}
+                  />
+                )}
+                open={isFinishPickerOpen}
+                className='rdtPickerFinishDateTime'
+              />
+            {/* <input
+              input-data-placeholder="true"
+              placeholder="Set finish date"
+              className='App-page-result-settings-search-input-finish-date'
+              type="string"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+            /> */}
+          </div>
+          <div>
+            <button className='App-page-result-settings-search-button' onClick={fetchGraphQLData}>Search</button>
+          </div>
+        </div>
       </div>
-    </div>
     <div className="App-page-result-table-container">
       <table className="App-page-result-table">
         <thead>

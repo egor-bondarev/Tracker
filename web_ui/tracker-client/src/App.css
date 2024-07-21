@@ -69,7 +69,7 @@
 }
 
 .App-page-result-settings-search {
-  position: absolute;
+  position: relative;
   width: 50%;
   height: 104px;
   left: 0px;
@@ -77,6 +77,15 @@
 
   background: #457B9D;
 }
+
+
+
+
+
+
+
+
+
 
 .App-page-result-settings-search-input-start-date {
   box-sizing: border-box;
@@ -87,6 +96,8 @@
   padding: 8px 16px 8px 8px;
   gap: 8px;
   padding-left: 47.54px;
+  cursor: pointer;
+  /* margin-bottom: 50px; */
 
   position: absolute;
   width: 218px;
@@ -102,12 +113,26 @@
   border: 1px solid #E0E0E0;
   border-radius: 8px;
 
-
   background-image: url('../public/calendar.png');
   background-repeat: no-repeat;
   background-position: 10px center;
   background-size: 27.54px 27.54px;
 }
+
+/* .App-page-result-settings-search-input-start-date .icon {
+  background-image: url('../public/calendar.png');
+  background-repeat: no-repeat;
+  background-position: 10px center;
+  background-size: 27.54px 27.54px;
+}
+
+.App-page-result-settings-search-input-finish-date .icon {
+  background-image: url('../public/calendar.png');
+  background-repeat: no-repeat;
+  background-position: 10px center;
+  background-size: 27.54px 27.54px;
+} */
+
 input[input-data-placeholder="true"]::placeholder {
   width: 158.46px;
   height: 24px;
@@ -134,8 +159,12 @@ input[input-data-placeholder="true"]::placeholder {
   padding: 8px 16px 8px 8px;
   gap: 8px;
   padding-left: 47.54px;
+  /* cursor: pointer; */
+  /* margin-top: 0px;
+  margin-bottom: 100px; */
+  /* margin-right: 50px; */
   
-  position: absolute;
+  position: relative;
   width: 218px;
   height: 40px;
   left: 278px;
@@ -161,6 +190,42 @@ input[input-data-placeholder="true"]::placeholder {
 
 .App-page-result-settings-search-input-start-date:focus {
   outline-color: #E63946;
+}
+
+/* .input-with-icon-wrapper {
+  position: relative;
+}
+
+.input-with-icon {
+  display: flex;
+  align-items: center;
+}
+*/
+/* .icon {
+  cursor: pointer;
+} */
+/*
+.custom-finish-datetime-picker {
+  position: relative;
+} 
+
+.custom-finish-datetime-picker {
+  position: relative;
+}  */
+
+.rdtPickerStartDateTime {
+  position: absolute;
+  top: 100%; 
+  left: 0;
+  z-index: 1000;
+}
+
+.rdtPickerFinishDateTime {
+  position:absolute;
+  /* margin-bottom: 50px;*/
+  top: 100%; 
+  left: 0;  
+  z-index: 1000;
 }
 
 .App-page-result-settings-search-button {
