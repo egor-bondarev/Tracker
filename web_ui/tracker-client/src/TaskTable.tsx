@@ -15,8 +15,8 @@ interface Task {
 
 const TasksTable: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [startDate] = useState('');
+  const [endDate] = useState('');
 
   const fetchGraphQLData = async () => {
     const query = `
@@ -144,19 +144,6 @@ const TasksTable: React.FC = () => {
       prev.includes(column) ? prev.filter(c => c !== column) : [...prev, column]
     );
   };
-
-  // TODO: What if I delete it?
-  // const updatePickerPosition = (inputRef: React.RefObject<HTMLInputElement>, pickerClass: string) => {
-  //   if (inputRef.current) {
-  //     const inputRect = inputRef.current.getBoundingClientRect();
-  //     const pickerElement = document.querySelector(`.${pickerClass}`) as HTMLElement;
-  //     if (pickerElement) {
-  //       pickerElement.style.position = 'absolute';
-  //       pickerElement.style.top = `${inputRect.bottom + window.scrollY}px`;
-  //       pickerElement.style.left = `${inputRect.left + window.scrollX}px`;
-  //     }
-  //   }
-  // };
 
   //TODO: Add validation if finish datetime < start datetime
 
