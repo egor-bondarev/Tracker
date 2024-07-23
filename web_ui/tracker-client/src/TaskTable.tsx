@@ -1,5 +1,10 @@
 // TasksTable.tsx
-import React, { useState } from 'react';
+import moment, { Moment } from 'moment';
+import Datetime from 'react-datetime';
+import 'react-datetime/css/react-datetime.css';
+import CustomInputDateTime from './InputDateField';
+import ColumnSelector from './ColumnSelector';
+import React, { useState, useRef, useEffect, ChangeEvent } from 'react';
 interface Task {
     id: number;
     description: string;
@@ -10,8 +15,8 @@ interface Task {
 
 const TasksTable: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [startDate] = useState('');
+  const [endDate] = useState('');
 
   const fetchGraphQLData = async () => {
     const query = `
@@ -56,54 +61,170 @@ const TasksTable: React.FC = () => {
     }
   };
 
+  const [selectedStartDateTime, setSelectedStartDateTime] = useState<Moment | string>('');
+  const [inputStartValue, setInputStartValue] = useState<string>('');
+  const [isStartPickerOpen, setIsStartPickerOpen] = useState<boolean>(false);
+  const startDatePickerRef = useRef<HTMLInputElement>(null);
+
+  const [selectedFinishDateTime, setSelectedFinishDateTime] = useState<Moment | string>('');
+  const [inputFinishValue, setInputFinishValue] = useState<string>('');
+  const [isFinishPickerOpen, setIsFinishPickerOpen] = useState<boolean>(false);
+  const finishDatePickerRef = useRef<HTMLInputElement>(null);
+
+  const [visibleColumns, setVisibleColumns] = useState<string[]>(['Description', 'Start Timestamp', 'Finish Timestamp', 'Duration']);
+  const columns = ['Description', 'Start Timestamp', 'Finish Timestamp', 'Duration'];
+
+  const containerStartDateRef = useRef<HTMLDivElement>(null);
+  const containerFinishDateRef = useRef<HTMLDivElement>(null);
+
+  const handleStartDateChange = (date: Moment | string) => {
+    if (moment.isMoment(date)) {
+      setSelectedStartDateTime(date);
+      setInputStartValue(date.format('YYYY-MM-DD HH:mm:00'));
+    } else {
+      setSelectedStartDateTime('');
+      setInputStartValue('');
+    }
+  };
+
+  const handleFinishDateChange = (date: Moment | string) => {
+    if (moment.isMoment(date)) {
+      setSelectedFinishDateTime(date);
+      setInputFinishValue(date.format('YYYY-MM-DD HH:mm:00'));
+    } else {
+      setSelectedFinishDateTime('');
+      setInputFinishValue('');
+    }
+  };
+
+  const handleInputStartChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setInputStartValue(event.target.value);
+  };
+
+  const handleInputFinishChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setInputFinishValue(event.target.value);
+  };
+
+  const openStartDateCalendar = () => {
+    setIsStartPickerOpen(true);
+  };
+  const openFinishDateCalendar = () => {
+    setIsFinishPickerOpen(true);
+  };
+
+  const closeStartDateCalendar = () => {
+    setIsStartPickerOpen(false);
+  };
+  const closeFinishDateCalendar = () => {
+    setIsFinishPickerOpen(false);
+  };
+
+  const handleClickOutside = (event: MouseEvent) => {
+    if (containerStartDateRef.current && !containerStartDateRef.current.contains(event.target as Node)) {
+      closeStartDateCalendar();
+    }
+    if (containerFinishDateRef.current && !containerFinishDateRef.current.contains(event.target as Node)) {
+      closeFinishDateCalendar();
+    }
+  };
+
   const handleFetchTasks = () => {
     fetchGraphQLData();
   };
 
+  useEffect(() => {
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const toggleColumnVisibility = (column: string) => {
+    setVisibleColumns(prev =>
+      prev.includes(column) ? prev.filter(c => c !== column) : [...prev, column]
+    );
+  };
+
+  //TODO: Add validation if finish datetime < start datetime
+
   return (
     <div>
-      <div>
-        <label>
-          Start Date:
-          <input
-            type="string"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
+      <div className='App-page-result-settings'>
+        <div className='App-page-result-settings-search'>
+          <div ref={containerStartDateRef} style={{ position: 'relative' }}>
+            <Datetime
+              value={selectedStartDateTime}
+              onChange={handleStartDateChange}
+              dateFormat="YYYY-MM-DD"
+              timeFormat="HH:mm:00"
+              renderInput={(props, openCalendar) => (
+                <CustomInputDateTime
+                  value={inputStartValue}
+                  onClick={openStartDateCalendar}
+                  onChange={handleInputStartChange}
+                  className='App-page-result-settings-search-input-start-date'
+                  ref={startDatePickerRef}
+                />
+              )}
+              open={isStartPickerOpen}
+              className='rdtPickerStartDateTime'
+            />
+          </div>
+          <div ref={containerFinishDateRef} style={{ position: 'relative' }}>
+            <Datetime
+              value={selectedFinishDateTime}
+              onChange={handleFinishDateChange}
+              dateFormat="DD/MM/YYYY"
+              timeFormat="HH:mm"
+              renderInput={(props, openCalendar) => (
+                <CustomInputDateTime
+                  value={inputFinishValue}
+                  onClick={openFinishDateCalendar}
+                  onChange={handleInputFinishChange}
+                  className='App-page-result-settings-search-input-finish-date'
+                  ref={finishDatePickerRef}
+                />
+              )}
+              open={isFinishPickerOpen}
+              className='rdtPickerFinishDateTime'
+            />
+          </div>
+          <div>
+            <button className='App-page-result-settings-search-button' onClick={fetchGraphQLData}>Search</button>
+          </div>
+        </div>
+        <div className='App-page-result-settings-filter'>
+          <ColumnSelector
+            columns={columns}
+            visibleColumns={visibleColumns}
+            onToggleColumn={toggleColumnVisibility}
           />
-        </label>
-        <label>
-          End Date:
-          <input
-            type="string"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-          />
-        </label>
-        <button onClick={fetchGraphQLData}>Show Tasks</button>
+        </div>
       </div>
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Description</th>
-            <th>Start Timestamp</th>
-            <th>Finish Timestamp</th>
-            <th>Duration</th>
-          </tr>
-        </thead>
-        <tbody>
-          {tasks.map((task) => (
-            <tr key={task.id}>
-              <td>{task.id}</td>
-              <td>{task.description}</td>
-              <td>{task.startTimestamp}</td>
-              <td>{task.finishTimestamp}</td>
-              <td>{task.duration}</td>
+      <div className="App-page-result-table-container">
+        <table className="App-page-result-table">
+          <thead>
+            <tr>
+              {visibleColumns.includes('Description') && <th>Description</th>}
+              {visibleColumns.includes('Start Timestamp') && <th>Start Timestamp</th>}
+              {visibleColumns.includes('Finish Timestamp') && <th>Finish Timestamp</th>}
+              {visibleColumns.includes('Duration') && <th>Duration</th>}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {tasks.map((task) => (
+              <tr key={task.id}>
+                {visibleColumns.includes('Description') && <td>{task.description}</td>}
+                {visibleColumns.includes('Start Timestamp') && <td>{task.startTimestamp}</td>}
+                {visibleColumns.includes('Finish Timestamp') && <td>{task.finishTimestamp}</td>}
+                {visibleColumns.includes('Duration') && <td>{task.duration}</td>}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
+    
   );
 };
 
