@@ -3,6 +3,7 @@ import moment, { Moment } from 'moment';
 import Datetime from 'react-datetime';
 import 'react-datetime/css/react-datetime.css';
 import CustomInputDateTime from './InputDateField';
+import ColumnSelector from './ColumnSelector';
 import React, { useState, useRef, useEffect, ChangeEvent } from 'react';
 interface Task {
     id: number;
@@ -70,6 +71,9 @@ const TasksTable: React.FC = () => {
   const [isFinishPickerOpen, setIsFinishPickerOpen] = useState<boolean>(false);
   const finishDatePickerRef = useRef<HTMLInputElement>(null);
 
+  const [visibleColumns, setVisibleColumns] = useState<string[]>(['Description', 'Start Timestamp', 'Finish Timestamp', 'Duration']);
+  const columns = ['Description', 'Start Timestamp', 'Finish Timestamp', 'Duration'];
+
   const containerStartDateRef = useRef<HTMLDivElement>(null);
   const containerFinishDateRef = useRef<HTMLDivElement>(null);
 
@@ -135,17 +139,26 @@ const TasksTable: React.FC = () => {
     };
   }, []);
 
-  const updatePickerPosition = (inputRef: React.RefObject<HTMLInputElement>, pickerClass: string) => {
-    if (inputRef.current) {
-      const inputRect = inputRef.current.getBoundingClientRect();
-      const pickerElement = document.querySelector(`.${pickerClass}`) as HTMLElement;
-      if (pickerElement) {
-        pickerElement.style.position = 'absolute';
-        pickerElement.style.top = `${inputRect.bottom + window.scrollY}px`;
-        pickerElement.style.left = `${inputRect.left + window.scrollX}px`;
-      }
-    }
+  const toggleColumnVisibility = (column: string) => {
+    setVisibleColumns(prev =>
+      prev.includes(column) ? prev.filter(c => c !== column) : [...prev, column]
+    );
   };
+
+  // TODO: What if I delete it?
+  // const updatePickerPosition = (inputRef: React.RefObject<HTMLInputElement>, pickerClass: string) => {
+  //   if (inputRef.current) {
+  //     const inputRect = inputRef.current.getBoundingClientRect();
+  //     const pickerElement = document.querySelector(`.${pickerClass}`) as HTMLElement;
+  //     if (pickerElement) {
+  //       pickerElement.style.position = 'absolute';
+  //       pickerElement.style.top = `${inputRect.bottom + window.scrollY}px`;
+  //       pickerElement.style.left = `${inputRect.left + window.scrollX}px`;
+  //     }
+  //   }
+  // };
+
+  //TODO: Add validation if finish datetime < start datetime
 
   return (
     <div>
@@ -193,29 +206,36 @@ const TasksTable: React.FC = () => {
             <button className='App-page-result-settings-search-button' onClick={fetchGraphQLData}>Search</button>
           </div>
         </div>
+        <div className='App-page-result-settings-filter'>
+          <ColumnSelector
+            columns={columns}
+            visibleColumns={visibleColumns}
+            onToggleColumn={toggleColumnVisibility}
+          />
+        </div>
       </div>
-    <div className="App-page-result-table-container">
-      <table className="App-page-result-table">
-        <thead>
-          <tr>
-            <th>Description</th>
-            <th>Start Timestamp</th>
-            <th>Finish Timestamp</th>
-            <th>Duration</th>
-          </tr>
-        </thead>
-        <tbody>
-          {tasks.map((task) => (
-            <tr key={task.id}>
-              <td>{task.description}</td>
-              <td>{task.startTimestamp}</td>
-              <td>{task.finishTimestamp}</td>
-              <td>{task.duration}</td>
+      <div className="App-page-result-table-container">
+        <table className="App-page-result-table">
+          <thead>
+            <tr>
+              {visibleColumns.includes('Description') && <th>Description</th>}
+              {visibleColumns.includes('Start Timestamp') && <th>Start Timestamp</th>}
+              {visibleColumns.includes('Finish Timestamp') && <th>Finish Timestamp</th>}
+              {visibleColumns.includes('Duration') && <th>Duration</th>}
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {tasks.map((task) => (
+              <tr key={task.id}>
+                {visibleColumns.includes('Description') && <td>{task.description}</td>}
+                {visibleColumns.includes('Start Timestamp') && <td>{task.startTimestamp}</td>}
+                {visibleColumns.includes('Finish Timestamp') && <td>{task.finishTimestamp}</td>}
+                {visibleColumns.includes('Duration') && <td>{task.duration}</td>}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
     
   );
