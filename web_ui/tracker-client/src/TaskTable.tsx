@@ -105,6 +105,11 @@ const TasksTable: React.FC = () => {
 
   const [visibleColumns, setVisibleColumns] = useState<string[]>(['Description', 'Start Timestamp', 'Finish Timestamp', 'Duration']);
   const columns = ['Description', 'Start Timestamp', 'Finish Timestamp', 'Duration'];
+  
+  // const [tasks, setTasks] = useState<Task[]>([
+  //   // Add initial tasks data here
+  // ]);
+  const [sortOrder, setSortOrder] = useState<string>('asc');
 
   const containerStartDateRef = useRef<HTMLDivElement>(null);
   const containerFinishDateRef = useRef<HTMLDivElement>(null);
@@ -175,6 +180,21 @@ const TasksTable: React.FC = () => {
     setVisibleColumns(prev =>
       prev.includes(column) ? prev.filter(c => c !== column) : [...prev, column]
     );
+  };
+
+  const sortTasks = (order: string) => {
+    const sortedTasks = [...tasks].sort((a, b) => {
+      if (a.description < b.description) return order === 'asc' ? -1 : 1;
+      if (a.description > b.description) return order === 'asc' ? 1 : -1;
+      return 0;
+    });
+    setTasks(sortedTasks);
+  };
+
+  const toggleSortOrder = () => {
+    const newOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+    setSortOrder(newOrder);
+    sortTasks(newOrder);
   };
 
   //TODO: Add validation if finish datetime < start datetime
@@ -248,7 +268,16 @@ const TasksTable: React.FC = () => {
         <table className="App-page-result-table">
           <thead>
             <tr>
-              {visibleColumns.includes('Description') && <th>Description</th>}
+              {visibleColumns.includes('Description') && (
+                <th onClick={toggleSortOrder}>
+                  Description
+                  <img
+                    src={sortOrder === 'asc' ? '../public/sort_asc.png' : '../public/sort_desc.png'}
+                    alt={sortOrder}
+                    className="sort-icon"
+                  />
+                </th>
+              )}
               {visibleColumns.includes('Start Timestamp') && <th>Start Timestamp</th>}
               {visibleColumns.includes('Finish Timestamp') && <th>Finish Timestamp</th>}
               {visibleColumns.includes('Duration') && <th>Duration</th>}

@@ -260,8 +260,26 @@ input[input-data-placeholder="true"]::placeholder {
 }
 
 .App-page-result-table th {
+  cursor: pointer;
+  position: relative;
   border-top-left-radius: 6px;
   font-weight: bold;
+  padding-right: 20px;
+}
+
+.sort-icon {
+  position: absolute;
+  right: 5px; /* Adjust to your needs */
+  top: 50%;
+  transform: translateY(-50%);
+  width: 12px; /* Adjust size to your needs */
+  height: 12px; /* Adjust size to your needs */
+  background-size: 27.54px 27.54px;
+}
+
+.App-page-result-table th:after {
+  content: '';
+  padding-left: 5px;
 }
 
 .App-page-result-table td {
