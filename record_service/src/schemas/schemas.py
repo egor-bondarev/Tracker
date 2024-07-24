@@ -30,10 +30,14 @@ class NewTask(TaskBase):
 
     @field_validator('timestamp')
     def timestamp_is_valid(v):
-        input_value = re.match(r'\d{4}-\d\d-\d\d \d\d:\d\d:\d\d', str(v))[0]
-
-        if datetime.strptime(input_value, '%Y-%m-%d %H:%M:%S').date() < datetime.now().date():
+        try:
+            input_value = re.match(r'\d{4}-\d\d-\d\d \d\d:\d\d:\d\d', str(v))[0]
+        except:
             raise ValueError(TimestampFieldError.DETAIL.value)
+
+# TODO: Include the condition of is_task_finished flag
+        # if datetime.strptime(input_value, '%Y-%m-%d %H:%M:%S').date() < datetime.now().date():
+        #     raise ValueError(TimestampFieldError.DETAIL.value)
         return v
 
 class FinishedTask(TaskBase):

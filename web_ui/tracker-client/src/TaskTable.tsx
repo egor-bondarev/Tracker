@@ -18,7 +18,30 @@ const TasksTable: React.FC = () => {
   const [startDate] = useState('');
   const [endDate] = useState('');
 
-  const fetchGraphQLData = async () => {
+  const defaultDate = (dateType: string) => {
+    let currentDay = new String(new Date().getDate())
+    if (currentDay.length < 2) {
+      currentDay = '0' + currentDay
+    }
+
+    let currentMonth = new String(new Date().getMonth())
+    if (currentMonth.length < 2) {
+      currentMonth = '0' + currentMonth
+    }
+
+    let currentYear = new String(new Date().getFullYear())
+    let currentDate = currentYear + '-' + currentMonth + '-' + currentDay
+
+    let currentTime = ' 23:59:59'
+
+    if (dateType == 'start') {
+      currentTime = ' 00:00:00'
+    }
+
+    return currentDate + currentTime
+  }
+
+  const fetchGraphQLData = async (startDateValue: string, finishDateValue: string) => {
     const query = `
       query GetTasksInPeriod($startDate: String!, $endDate: String!) {
         tasksInPeriod(startDate: $startDate, endDate: $endDate) {
@@ -32,10 +55,19 @@ const TasksTable: React.FC = () => {
     `;
 
     const variables = {
-      startDate: new String(startDate),
-      endDate: new String(endDate),
+      startDate: startDateValue,
+      endDate: finishDateValue,
     };
 
+    if (variables.startDate.length == 0) {
+      variables.startDate = defaultDate('start')
+    }
+
+    if (variables.endDate.length == 0) {
+      variables.endDate = defaultDate('fiish')
+    }
+
+    console.log(variables.startDate)
     try {
       const response = await fetch('http://0.0.0.0:8001/graphql', {
         method: 'POST',
@@ -67,7 +99,7 @@ const TasksTable: React.FC = () => {
   const startDatePickerRef = useRef<HTMLInputElement>(null);
 
   const [selectedFinishDateTime, setSelectedFinishDateTime] = useState<Moment | string>('');
-  const [inputFinishValue, setInputFinishValue] = useState<string>('');
+  const [inputFinishValue, setInputFinishValue] = useState('');
   const [isFinishPickerOpen, setIsFinishPickerOpen] = useState<boolean>(false);
   const finishDatePickerRef = useRef<HTMLInputElement>(null);
 
@@ -129,7 +161,7 @@ const TasksTable: React.FC = () => {
   };
 
   const handleFetchTasks = () => {
-    fetchGraphQLData();
+    fetchGraphQLData(inputStartValue, inputFinishValue);
   };
 
   useEffect(() => {
@@ -146,6 +178,17 @@ const TasksTable: React.FC = () => {
   };
 
   //TODO: Add validation if finish datetime < start datetime
+  const updatePickerPosition = (inputRef: React.RefObject<HTMLInputElement>, pickerClass: string) => {
+    if (inputRef.current) {
+      const inputRect = inputRef.current.getBoundingClientRect();
+      const pickerElement = document.querySelector(`.${pickerClass}`) as HTMLElement;
+      if (pickerElement) {
+        pickerElement.style.position = 'absolute';
+        pickerElement.style.top = `${inputRect.bottom + window.scrollY}px`;
+        pickerElement.style.left = `${inputRect.left + window.scrollX}px`;
+      }
+    }
+  };
 
   return (
     <div>
@@ -175,7 +218,7 @@ const TasksTable: React.FC = () => {
               value={selectedFinishDateTime}
               onChange={handleFinishDateChange}
               dateFormat="DD/MM/YYYY"
-              timeFormat="HH:mm"
+              timeFormat="HH:mm:00"
               renderInput={(props, openCalendar) => (
                 <CustomInputDateTime
                   value={inputFinishValue}
@@ -190,7 +233,7 @@ const TasksTable: React.FC = () => {
             />
           </div>
           <div>
-            <button className='App-page-result-settings-search-button' onClick={fetchGraphQLData}>Search</button>
+            <button className='App-page-result-settings-search-button' onClick={handleFetchTasks}>Search</button>
           </div>
         </div>
         <div className='App-page-result-settings-filter'>
