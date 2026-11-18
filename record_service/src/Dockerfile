@@ -1,6 +1,7 @@
-FROM tiangolo/uvicorn-gunicorn-fastapi:python3.11-slim
+FROM python:3.11-slim-bookworm
 
 ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app
 WORKDIR /app/src
 COPY requirements.txt .
 

@@ -8,6 +8,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
           
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Prepare disposable test configuration
+        run: |
+          cp .env.example .env
+          sed -i "s/^DATABASE_ADMIN_PASSWORD=$/DATABASE_ADMIN_PASSWORD=ci_admin_password/; s/^DATABASE_PASSWORD=$/DATABASE_PASSWORD=ci_app_password/" .env
+
       - name: Install test requirements
         run: |
           pip install pytest allure-pytest
@@ -20,6 +29,9 @@ jobs:
         continue-on-error: false
         run: |
           make run_tracker
+
+      - name: Check initialization regressions
+        run: python -m unittest discover -s tests -v
 
       - name: Run component tests
         continue-on-error: true
@@ -52,5 +64,6 @@ jobs:
           publish_dir: allure-history
 
       - name: Stop services
+        if: always()
         run: |
           make stop_tracker

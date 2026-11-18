@@ -1,3 +1,5 @@
+DOCKER_COMPOSE ?= docker compose
+
 COMPONENT_TESTS_DIR = ./record_service/tests/component
 UNIT_TESTS_DIR = ./record_service/tests/unit
 ALL_TESTS_DIR = ./record_service/tests
@@ -6,16 +8,15 @@ export PYTHONPATH := $(shell pwd)
 
 .PHONY: run_tracker
 run_tracker:
-	docker-compose up -d --build
-	python ./record_service/src/create_db.py
+	$(DOCKER_COMPOSE) up -d --build
 
 .PHONY: run_tracker_debug
 run_tracker_debug:
-	docker-compose up --build
+	$(DOCKER_COMPOSE) up --build
 
 .PHONY: stop_tracker
 stop_tracker:
-	docker-compose down
+	$(DOCKER_COMPOSE) down
 
 .PHONY: record_service_component_tests
 record_service_component_tests:
