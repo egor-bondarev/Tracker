@@ -10,6 +10,7 @@ from urllib.request import Request, urlopen
 
 RECORD = os.getenv('SMOKE_RECORD_URL', 'http://127.0.0.1:8000')
 ANALYTICS = os.getenv('SMOKE_ANALYTICS_URL', 'http://127.0.0.1:8001')
+WEB = os.getenv('SMOKE_WEB_URL')
 MARKER = 'deployment-smoke-persistence'
 
 
@@ -31,7 +32,7 @@ def wait_for_api(url):
 
 
 def verify():
-    result = request(ANALYTICS + '/graphql', {'query': '''{
+    result = request((WEB or ANALYTICS) + '/graphql', {'query': '''{
         tasksInPeriod(startDate: "2000-01-01", endDate: "2100-01-01") {
             id description duration
         }
@@ -48,9 +49,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
     wait_for_api(RECORD)
     wait_for_api(ANALYTICS)
-    web_url = os.getenv('SMOKE_WEB_URL')
-    if web_url:
-        with urlopen(web_url, timeout=5) as response:
+    if WEB:
+        with urlopen(WEB, timeout=5) as response:
             assert b'id="root"' in response.read(), 'Tracker page is missing the React root'
     if args.phase == 'create':
         start = (datetime.now(timezone.utc) + timedelta(days=1)).replace(tzinfo=None, microsecond=0)
