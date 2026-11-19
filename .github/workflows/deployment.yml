@@ -25,6 +25,8 @@ jobs:
         run: docker compose up -d --build
       - name: Exercise the APIs and the web proxy
         run: python tests/deployment_smoke.py create
+      - name: Check Tracker readiness through its published ports
+        run: python scripts/check_tracker.py
       - name: Verify repeat initialization and data persistence
         run: |
           docker compose run --rm db_init

@@ -194,3 +194,18 @@ The local file is ignored by Git. Use disposable credentials for this service.
 cp sampleService/.env.testing.example sampleService/.env.testing
 chmod 600 sampleService/.env.testing
 ```
+
+### Check Tracker availability
+
+After starting Compose, run:
+
+```bash
+python3 scripts/check_tracker.py
+```
+
+From another machine, pass the Tracker web and Record API base URLs with
+`--web-url` and `--record-url`. The check verifies that Nginx serves the React
+page, GraphQL can read tasks through Nginx, and the Record API can read the tasks
+table. An empty task list is valid. The JSON result contains one status per check,
+and the command exits with code 1 if any check fails. It does not create tasks,
+print task data, or restart services.
