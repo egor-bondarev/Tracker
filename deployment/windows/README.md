@@ -7,7 +7,7 @@
 - Windows: `laptop-ah1r7pkt\bo098`, учётная запись владеет дистрибутивом;
 - Ubuntu: `Ubuntu-24.04`, пользователь `egor`, сеть NAT;
 - домашний адрес Windows: `192.168.0.38`, закреплён в DHCP;
-- API: TCP 8000 и 8001, профиль Wi-Fi Private;
+- API: TCP 8000 и 8001, веб-интерфейс: TCP 8080, профиль Wi-Fi Private;
 - Docker включён в systemd, контейнеры имеют restart policy.
 
 ## Восстановление после смены питания и пробуждения
@@ -18,8 +18,7 @@
 KeepAlive при необходимости и обновляет перенаправления. Ошибки HTTP не
 участвуют в запуске восстановления.
 
-Запуск по подключению зарядки проверен на Acer. Восстановление после сна и
-гибернации требует отдельной проверки на ноутбуке.
+Запуск по подключению зарядки проверен на Acer. Ручной выход из гибернации также проверен до добавления порта 8080.
 
 ## Установка
 
@@ -77,7 +76,7 @@ Register-ScheduledTask -TaskName "Acer-WSL-Ports" `
 Start-ScheduledTask -TaskName "Acer-WSL-Ports"
 ```
 
-Ожидается `Ready`, `LastTaskResult = 0`. Скрипт обновляет два portproxy-правила и,
+Ожидается `Ready`, `LastTaskResult = 0`. Скрипт обновляет правила portproxy для TCP 8000, 8001 и 8080 и,
 если слушателей на домашнем IP нет, перезапускает IP Helper. Это кратковременно
 затрагивает и другие перенаправления, обслуживаемые IP Helper.
 
@@ -121,7 +120,16 @@ New-NetFirewallRule -Name "Tracker-API-LAN" `
     -DisplayName "Tracker API from LAN" -Direction Inbound -Action Allow `
     -Protocol TCP -LocalPort 8000,8001 -LocalAddress 192.168.0.38 `
     -RemoteAddress LocalSubnet -Profile Private
+
+New-NetFirewallRule -Name "Tracker-Web-LAN" `
+    -DisplayName "Tracker Web from LAN" -Direction Inbound -Action Allow `
+    -Protocol TCP -LocalPort 8080 -LocalAddress 192.168.0.38 `
+    -RemoteAddress LocalSubnet -Profile Private
 ```
+
+На уже настроенном Acer добавьте только правило `Tracker-Web-LAN`. Скопируйте
+новую версию скрипта портов и выполните `Start-ScheduledTask -TaskName "Acer-WSL-Ports"`.
+После запуска контейнера откройте `http://192.168.0.38:8080` с Mac.
 
 ## Проверка после перезагрузки
 

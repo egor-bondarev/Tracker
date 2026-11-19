@@ -9,6 +9,7 @@ if ($keepAlive.State -ne "Running") {
 
 $wsl = "$env:SystemRoot\System32\wsl.exe"
 $netsh = "$env:SystemRoot\System32\netsh.exe"
+$ports = 8000, 8001, 8080
 
 $wslIp = $null
 for ($attempt = 1; $attempt -le 30; $attempt++) {
@@ -27,17 +28,17 @@ for ($attempt = 1; $attempt -le 30; $attempt++) {
 }
 if (-not $wslIp) { throw "Could not determine the Ubuntu IPv4 address." }
 
-foreach ($port in 8000, 8001) {
+foreach ($port in $ports) {
     & $netsh interface portproxy add v4tov4 `
         listenaddress=192.168.0.38 listenport=$port `
         connectaddress=$wslIp connectport=$port
     if ($LASTEXITCODE -ne 0) { throw "Could not configure port $port." }
 }
-Write-Output "Forwarding ports 8000 and 8001 to $wslIp"
+Write-Output "Forwarding ports $($ports -join ", ") to $wslIp"
 
 function Test-TrackerListeners {
     $listeners = @(Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue)
-    foreach ($port in 8000, 8001) {
+    foreach ($port in $ports) {
         $match = $listeners | Where-Object {
             $_.LocalAddress -eq "192.168.0.38" -and $_.LocalPort -eq $port
         }
@@ -55,4 +56,4 @@ if (-not (Test-TrackerListeners)) {
     }
 }
 if (-not (Test-TrackerListeners)) { throw "Tracker LAN listeners are still missing." }
-Write-Output "Both Tracker LAN listeners are active."
+Write-Output "Tracker LAN listeners are active."

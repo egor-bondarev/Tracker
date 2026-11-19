@@ -41,19 +41,16 @@ This is a task tracking application built with a FastAPI backend, PostgreSQL dat
     make run_tracker
     ```
 
-3. **Run the React Application**:
+3. **Open the React web interface** at http://localhost:8080. Compose builds the
+   React bundle and Nginx forwards `/graphql` to the analytics service on the
+   Compose network. For local frontend development, `npm ci && npm start` from
+   `web_ui/tracker-client` starts a dev server on port 3000 and proxies to analytics
+   on host port 8001.
+
+4. **Run Desktop GUI** from the repository root:
 
     ```bash
-    cd web_ui/tracker-client
-    npm start
-    ```
-    Web UI will be available on http://localhost:3000
-
-4. **Run Desktop GUI**:
-
-    ```bash
-    cd ../..
-    cd ./desktop_gui
+    cd desktop_gui
     python ./main.py
     ```
     ![alt text](image.png)
@@ -63,7 +60,7 @@ This is a task tracking application built with a FastAPI backend, PostgreSQL dat
 1. On desktop GUI type your task description and press Start. 
 2. After finishing your task press Stop.
 3. If you forgot to start your task, you may type description and press Stop. In this case start time will be a finish time from your previous task.
-4. To see your tasks list go to web ui (http://localhost:3000), set start and finish time by mask "YYYY-MM-DD hh:mm:ss" and click "Show Tasks".
+4. To see your tasks list go to web ui (http://localhost:8080), set start and finish time by mask "YYYY-MM-DD hh:mm:ss" and click "Show Tasks".
 
 ### Architecture
 #### **Record service:**
@@ -149,7 +146,7 @@ Inside Compose, database access is always `tracker_database:5432`.
 `RECORD_SERVICE_HOST` and `ANALYTIC_SERVICE_HOST` are client settings, not container
 listen addresses. PostgreSQL's host port defaults to `127.0.0.1:5454`, for local
 tests only; it is not published to the LAN. WSL forwarding/firewall setup for LAN
-access is a separate step. The React UI is still started separately as above.
+access is configured in the Windows startup runbook. The web UI uses port 8080.
 
 PostgreSQL uses the official `postgres:17-bookworm` image and stores data in the
 named volume `postgres17_data` at `/var/lib/postgresql/data`. The major version is

@@ -6,6 +6,9 @@ jobs:
   deployment:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      SMOKE_WEB_URL: http://127.0.0.1:8080
+      SMOKE_ANALYTICS_URL: http://127.0.0.1:8080
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -21,7 +24,7 @@ jobs:
           python -m unittest discover -s tests -v
       - name: Build and start
         run: docker compose up -d --build
-      - name: Exercise both APIs
+      - name: Exercise the APIs and the web proxy
         run: python tests/deployment_smoke.py create
       - name: Verify repeat initialization and data persistence
         run: |

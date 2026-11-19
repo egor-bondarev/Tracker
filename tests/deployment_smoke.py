@@ -48,6 +48,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
     wait_for_api(RECORD)
     wait_for_api(ANALYTICS)
+    web_url = os.getenv('SMOKE_WEB_URL')
+    if web_url:
+        with urlopen(web_url, timeout=5) as response:
+            assert b'id="root"' in response.read(), 'Tracker page is missing the React root'
     if args.phase == 'create':
         start = (datetime.now(timezone.utc) + timedelta(days=1)).replace(tzinfo=None, microsecond=0)
         task = request(RECORD + '/add-record/new/?is_task_finished=false', {
