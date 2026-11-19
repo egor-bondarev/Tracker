@@ -168,3 +168,53 @@ Start-ScheduledTask -TaskName "Acer-WSL-Ports"
 
 From another LAN device, open the Windows LAN address on port 8088 at
 `/dashboard` and run the Tracker check.
+
+### Dashboard metrics collectors
+
+The dashboard reads two local snapshots. Set these paths in the dashboard's
+local Compose `.env` on a default WSL installation, alongside the existing bind
+address:
+
+```dotenv
+DASHBOARD_WINDOWS_METRICS_DIR=/mnt/c/ProgramData/AcerHomelab/metrics
+DASHBOARD_WSL_METRICS_DIR=/var/lib/homelab-metrics
+```
+
+In elevated PowerShell, copy `Write-HostMetrics.ps1` into
+`C:\ProgramData\AcerHomelab\collectors`. Restrict write access to the collector
+and metrics directories to Administrators and SYSTEM. Allow read access to the
+metrics directory for the Windows account that owns the WSL distribution. Register the Windows collector and start
+it once to produce the first snapshot:
+
+```powershell
+$metricsAction = New-ScheduledTaskAction `
+    -Execute "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" `
+    -Argument "-NoProfile -NonInteractive -ExecutionPolicy Bypass -File C:\ProgramData\AcerHomelab\collectors\Write-HostMetrics.ps1"
+$repeat = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1) `
+    -RepetitionInterval (New-TimeSpan -Minutes 1)
+$boot = New-ScheduledTaskTrigger -AtStartup
+$principal = New-ScheduledTaskPrincipal -UserId SYSTEM -LogonType ServiceAccount
+$settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -MultipleInstances IgnoreNew `
+    -ExecutionTimeLimit (New-TimeSpan -Seconds 40) `
+    -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
+Register-ScheduledTask -TaskName "Acer-HostMetrics" -Action $metricsAction `
+    -Trigger @($boot, $repeat) -Principal $principal -Settings $settings
+Start-ScheduledTask -TaskName "Acer-HostMetrics"
+```
+
+In Ubuntu, run the following from the repository checkout used for the dashboard.
+The timer runs the Docker commands on the host and writes only the selected
+metrics. The dashboard container reads the files and has no Docker socket mount.
+
+```bash
+sudo install -D -m 0644 deployment/wsl/collect_metrics.py /usr/local/libexec/homelab-collect-metrics.py
+sudo install -m 0644 deployment/wsl/homelab-metrics.{service,timer} /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now homelab-metrics.timer
+sudo systemctl start homelab-metrics.service
+sudo docker compose -f dashboard/compose.yml --env-file dashboard/.env up -d --build
+```
+
+The browser reloads the snapshots every 30 seconds. Collectors replace each
+snapshot roughly once a minute. Snapshots older than 150 seconds are marked
+stale. These collectors only sample state and do not restart or repair services.

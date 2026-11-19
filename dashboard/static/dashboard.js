@@ -49,3 +49,101 @@ button.addEventListener("click", async () => {
     button.disabled = false;
   }
 });
+
+const formatGiB = new Intl.NumberFormat("ru", { maximumFractionDigits: 2 });
+const formatPercent = new Intl.NumberFormat("ru", { maximumFractionDigits: 1 });
+const gib = (value) => Number.isFinite(value) ? formatGiB.format(value / 2 ** 30) : "—";
+const ratio = (part, total) => `${gib(part)} из ${gib(total)} ГиБ`;
+
+function element(tag, text) {
+  const node = document.createElement(tag);
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+
+function displayMetrics(name, sample, entries) {
+  const list = document.querySelector(`#${name}-metrics`);
+  const age = document.querySelector(`#${name}-age`);
+  list.replaceChildren(...entries.map(([label, value]) => {
+    const metric = element("div");
+    metric.append(element("dt", label), element("dd", value));
+    return metric;
+  }));
+  age.dataset.state = sample.state;
+  if (!sample.snapshot) {
+    age.textContent = "Нет замера";
+    return;
+  }
+  const time = new Date(sample.snapshot.collected_at).toLocaleTimeString();
+  age.textContent = sample.state === "stale" ? `Замер устарел · ${time}` : `Замер в ${time}`;
+}
+
+function displayProjects(projects) {
+  const target = document.querySelector("#projects");
+  if (!projects?.length) {
+    const note = element("p", projects ? "Контейнеров нет" : "Нет данных Docker");
+    note.className = "metric-note";
+    target.replaceChildren(note);
+    return;
+  }
+
+  target.replaceChildren(...projects.map((project) => {
+    const wrapper = element("div");
+    wrapper.className = "project";
+    wrapper.append(element("h3", project.name ?? "Вне Compose"));
+    const scroll = element("div");
+    scroll.className = "table-scroll";
+    const table = element("table");
+    table.setAttribute("aria-label", project.name ?? "Вне Compose");
+    const header = table.createTHead().insertRow();
+    for (const title of ["Контейнер", "Состояние", "CPU", "RAM"]) {
+      const cell = element("th", title);
+      cell.scope = "col";
+      header.append(cell);
+    }
+    const body = table.createTBody();
+    for (const container of project.containers) {
+      const row = body.insertRow();
+      const completed = container.state === "exited" && container.status.startsWith("Exited (0)");
+      const unhealthy = container.status.includes("(unhealthy)");
+      row.insertCell().textContent = container.name;
+      const status = row.insertCell();
+      status.textContent = completed ? "Завершён успешно" : container.status;
+      status.dataset.state = unhealthy ? "unhealthy" : container.state;
+      row.insertCell().textContent = container.cpu ?? "—";
+      row.insertCell().textContent = container.memory ?? "—";
+    }
+    scroll.append(table);
+    wrapper.append(scroll);
+    return wrapper;
+  }));
+}
+
+async function refreshMetrics() {
+  try {
+    const response = await fetch("/api/metrics", { cache: "no-store" });
+    if (!response.ok) throw new Error("Metrics request failed");
+    const { windows, wsl } = await response.json();
+    const host = windows.snapshot;
+    const memory = wsl.snapshot?.memory;
+    displayMetrics("windows", windows, host ? [
+      ["Загрузка CPU", Number.isFinite(host.cpu_percent) ? `${formatPercent.format(host.cpu_percent)}%` : "—"],
+      ["Доступная RAM", ratio(host.memory_available_bytes, host.memory_total_bytes)],
+      [`Свободно на ${host.disk_name}`, ratio(host.disk_free_bytes, host.disk_total_bytes)],
+    ] : []);
+    displayMetrics("wsl", wsl, memory ? [
+      ["Доступная RAM", ratio(memory.available_bytes, memory.total_bytes)],
+      ["Занято swap", ratio(memory.swap_used_bytes, memory.swap_total_bytes)],
+    ] : []);
+    displayProjects(wsl.snapshot?.projects);
+  } catch {
+    const unavailable = { state: "unavailable" };
+    displayMetrics("windows", unavailable, []);
+    displayMetrics("wsl", unavailable, []);
+    displayProjects(null);
+  } finally {
+    setTimeout(refreshMetrics, 30000);
+  }
+}
+
+refreshMetrics();

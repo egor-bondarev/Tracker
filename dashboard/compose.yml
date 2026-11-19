@@ -11,5 +11,8 @@ services:
     environment:
       TRACKER_WEB_URL: "${TRACKER_WEB_URL:-http://host.docker.internal:8080}"
       TRACKER_RECORD_URL: "${TRACKER_RECORD_URL:-http://host.docker.internal:8000}"
+    volumes:
+      - "${DASHBOARD_WINDOWS_METRICS_DIR:-./metrics/windows}:/metrics/windows:ro"
+      - "${DASHBOARD_WSL_METRICS_DIR:-./metrics/wsl}:/metrics/wsl:ro"
     extra_hosts:
       - "host.docker.internal:host-gateway"

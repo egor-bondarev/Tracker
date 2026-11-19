@@ -2,6 +2,7 @@
 
 import json
 import os
+from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -15,6 +16,17 @@ ASSETS = {
     "/dashboard.css": ("dashboard.css", "text/css"),
     "/dashboard.js": ("dashboard.js", "text/javascript"),
 }
+
+
+def read_snapshot(path):
+    try:
+        with path.open(encoding="utf-8-sig") as file:
+            data = json.load(file)
+        timestamp = datetime.fromisoformat(data["collected_at"])
+        age = (datetime.now(timezone.utc) - timestamp).total_seconds()
+    except (OSError, TypeError, KeyError, ValueError, OverflowError):
+        return {"state": "unavailable"}
+    return {"state": "stale" if age > 150 else "current", "snapshot": data}
 
 
 class DashboardHandler(BaseHTTPRequestHandler):
@@ -32,6 +44,14 @@ class DashboardHandler(BaseHTTPRequestHandler):
         if self.path == "/favicon.ico":
             self.send_response(204)
             self.end_headers()
+            return
+
+        if self.path == "/api/metrics":
+            report = {
+                name: read_snapshot(Path("/metrics") / name / f"{name}.json")
+                for name in ("windows", "wsl")
+            }
+            self.send_content(json.dumps(report).encode("utf-8"), "application/json")
             return
 
         if self.path == "/api/tracker/check":
