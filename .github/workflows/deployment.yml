@@ -1,0 +1,41 @@
+name: Compose deployment checks
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  deployment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SMOKE_WEB_URL: http://127.0.0.1:8080
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Prepare disposable configuration
+        run: |
+          cp .env.example .env
+          sed -i 's/^DATABASE_ADMIN_PASSWORD=$/DATABASE_ADMIN_PASSWORD=ci_admin_password/; s/^DATABASE_PASSWORD=$/DATABASE_PASSWORD=ci_app_password/' .env
+      - name: Check initializer failure handling
+        run: |
+          pip install psycopg2-binary==2.9.9 pydantic==2.7.2 pydantic-settings==2.2.1
+          python -m unittest discover -s tests -v
+      - name: Build and start
+        run: docker compose up -d --build
+      - name: Exercise the APIs and the web proxy
+        run: python tests/deployment_smoke.py create
+      - name: Verify repeat initialization and data persistence
+        run: |
+          docker compose run --rm db_init
+          docker compose down
+          docker compose up -d
+          python tests/deployment_smoke.py verify
+      - name: Diagnostics
+        if: failure()
+        run: |
+          docker compose ps -a
+          docker compose logs --tail=100
+      - name: Clean up disposable stack
+        if: always()
+        run: docker compose down -v

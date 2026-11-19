@@ -1,51 +1,77 @@
 services:
   tracker_database:
-    image: bitnami/postgresql
-    restart: always
-    container_name: tracker_database
+    image: postgres:17-bookworm
+    restart: unless-stopped
     volumes:
-      - ./src/test.db:/app/test.db
-      - postgres_data:/var/lib/postgresql/data
-    env_file: ".env"
+      - postgres17_data:/var/lib/postgresql/data
     ports:
-      - ${DATABASE_EXTERNAL_PORT}:${DATABASE_PORT}
-    expose:
-      - ${DATABASE_PORT}
+      - "127.0.0.1:${DATABASE_EXTERNAL_PORT:-5454}:5432"
     environment:
-      - POSTGRESQL_USERNAME=${DATABASE_ADMIN}
-      - POSTGRESQL_PASSWORD=${DATABASE_ADMIN_PASSWORD}
-      - POSTGRESQL_DATABASE=${DATABASE_DEFAULT_NAME}
-      - POSTGRESQL_HOST=${DATABASE_HOST}
-      - POSTGRESQL_PORT=${DATABASE_PORT}
+      POSTGRES_USER: ${DATABASE_ADMIN:?Set DATABASE_ADMIN in .env}
+      POSTGRES_PASSWORD: ${DATABASE_ADMIN_PASSWORD:?Set DATABASE_ADMIN_PASSWORD in .env}
+      POSTGRES_DB: ${DATABASE_DEFAULT_NAME:-postgres}
+    healthcheck:
+      test: ["CMD-SHELL", 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  db_init:
+    build: ./record_service/src
+    restart: "no"
+    command: ["python", "create_db.py"]
+    env_file: .env
+    environment:
+      DATABASE_HOST: tracker_database
+      DATABASE_PORT: "5432"
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:?Set DATABASE_PASSWORD in .env}
+    depends_on:
+      tracker_database:
+        condition: service_healthy
 
   record_service:
-    container_name: record_service
     build: ./record_service/src
-    restart: always
-    command: "sh -c 'uvicorn main:app --reload --host ${RECORD_SERVICE_HOST} --port ${RECORD_SERVICE_PORT}'"
-    volumes:
-      - ./record_service/src:/app/src
+    restart: unless-stopped
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
     ports:
-      - ${RECORD_SERVICE_PORT}:${RECORD_SERVICE_PORT}
-    expose:
-      - ${RECORD_SERVICE_PORT}
-    env_file: ".env"
+      - "${RECORD_SERVICE_PORT:-8000}:8000"
+    env_file: .env
+    environment:
+      DATABASE_HOST: tracker_database
+      DATABASE_PORT: "5432"
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:?Set DATABASE_PASSWORD in .env}
     depends_on:
-      - tracker_database
+      tracker_database:
+        condition: service_healthy
+      db_init:
+        condition: service_completed_successfully
 
   analytic_service:
-    container_name: analytic_service
     build: ./analytic_service/src
-    restart: always
-    command: "sh -c 'uvicorn main:app --reload --host ${ANALYTIC_SERVICE_HOST} --port ${ANALYTIC_SERVICE_PORT}'"
-    volumes:
-      - ./analytic_service/src:/app/src
+    restart: unless-stopped
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001"]
     ports:
-      - ${ANALYTIC_SERVICE_PORT}:${ANALYTIC_SERVICE_PORT}
-    expose:
-      - ${ANALYTIC_SERVICE_PORT}
-    env_file: ".env"
+      - "${ANALYTIC_SERVICE_PORT:-8001}:8001"
+    env_file: .env
+    environment:
+      DATABASE_HOST: tracker_database
+      DATABASE_PORT: "5432"
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:?Set DATABASE_PASSWORD in .env}
     depends_on:
-      - tracker_database
+      tracker_database:
+        condition: service_healthy
+      db_init:
+        condition: service_completed_successfully
+
+  web:
+    build: ./web_ui/tracker-client
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    depends_on:
+      - analytic_service
+
 volumes:
-  postgres_data:
+  # Separate from the legacy Bitnami volume; never reuse incompatible PGDATA.
+  postgres17_data:

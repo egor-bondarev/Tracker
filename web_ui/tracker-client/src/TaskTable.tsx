@@ -15,10 +15,18 @@ interface Task {
 
 const TasksTable: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [startDate] = useState('');
-  const [endDate] = useState('');
+  const [searchMessage, setSearchMessage] = useState('');
 
   const fetchGraphQLData = async () => {
+    const format = 'YYYY-MM-DD HH:mm:ss';
+    const start = moment(inputStartValue, format, true);
+    const end = moment(inputFinishValue, format, true);
+    if (!start.isValid() || !end.isValid() || end.isBefore(start)) {
+      setSearchMessage('Enter a valid range in YYYY-MM-DD HH:mm:ss format.');
+      return;
+    }
+
+    setSearchMessage('Loading tasks…');
     const query = `
       query GetTasksInPeriod($startDate: String!, $endDate: String!) {
         tasksInPeriod(startDate: $startDate, endDate: $endDate) {
@@ -32,14 +40,13 @@ const TasksTable: React.FC = () => {
     `;
 
     const variables = {
-      startDate: new String(startDate),
-      endDate: new String(endDate),
+      startDate: start.format(format),
+      endDate: end.format(format),
     };
 
     try {
-      const response = await fetch('http://0.0.0.0:8001/graphql', {
+      const response = await fetch('/graphql', {
         method: 'POST',
-        //mode: 'no-cors',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -54,9 +61,13 @@ const TasksTable: React.FC = () => {
       }
 
       const result = await response.json();
-      console.log(result)
+      if (result.errors?.length || !Array.isArray(result.data?.tasksInPeriod)) {
+        throw new Error(result.errors?.[0]?.message ?? 'Invalid response');
+      }
       setTasks(result.data.tasksInPeriod);
+      setSearchMessage(result.data.tasksInPeriod.length ? '' : 'No tasks in this range.');
     } catch (error) {
+      setSearchMessage('Could not load tasks.');
       console.error('Error:', error);
     }
   };
@@ -128,10 +139,6 @@ const TasksTable: React.FC = () => {
     }
   };
 
-  const handleFetchTasks = () => {
-    fetchGraphQLData();
-  };
-
   useEffect(() => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
@@ -144,8 +151,6 @@ const TasksTable: React.FC = () => {
       prev.includes(column) ? prev.filter(c => c !== column) : [...prev, column]
     );
   };
-
-  //TODO: Add validation if finish datetime < start datetime
 
   return (
     <div>
@@ -201,6 +206,7 @@ const TasksTable: React.FC = () => {
           />
         </div>
       </div>
+      {searchMessage && <p role="status">{searchMessage}</p>}
       <div className="App-page-result-table-container">
         <table className="App-page-result-table">
           <thead>
