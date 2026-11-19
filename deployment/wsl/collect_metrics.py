@@ -1,14 +1,18 @@
 """Write a small dashboard snapshot using Docker and /proc/meminfo."""
 
+import fcntl
 import json
 import os
 import subprocess
+import sys
 import tempfile
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
 
-SNAPSHOT = Path("/var/lib/homelab-metrics/wsl.json")
+STATE = Path("/var/lib/homelab-metrics")
+WINDOWS_SNAPSHOT = Path("/mnt/c/ProgramData/AcerHomelab/metrics/windows.json")
 CONTAINER_FORMAT = (
     '{"name":{{json .Names}},"state":{{json .State}},'
     '"status":{{json .Status}},"project":{{json (.Label "com.docker.compose.project")}}}'
@@ -62,23 +66,52 @@ def projects():
     ]
 
 
-def main():
-    data = {"memory": memory(), "projects": None}
-    try:
-        data["projects"] = projects()
-    except (subprocess.SubprocessError, OSError, ValueError):
-        # A daemon failure must not hide WSL memory or look like an empty container list.
-        print("Could not collect Docker metrics.", flush=True)
+def write_snapshot(target, data):
     data["collected_at"] = datetime.now(timezone.utc).isoformat()
-    with tempfile.NamedTemporaryFile(mode="w", dir=SNAPSHOT.parent, delete=False) as file:
+    with tempfile.NamedTemporaryFile(mode="w", dir=STATE, delete=False) as file:
         path = Path(file.name)
         try:
             json.dump(data, file)
             file.flush()
             os.fchmod(file.fileno(), 0o644)
-            path.replace(SNAPSHOT)
+            path.replace(STATE / f"{target}.json")
         finally:
             path.unlink(missing_ok=True)
+
+
+def refresh_windows():
+    previous = WINDOWS_SNAPSHOT.stat().st_mtime_ns if WINDOWS_SNAPSHOT.exists() else 0
+    subprocess.run(
+        ["/mnt/c/Windows/System32/schtasks.exe", "/Run", "/TN", "Acer-HostMetrics"],
+        check=True, capture_output=True, timeout=8, cwd="/mnt/c/Windows",
+    )
+    for _ in range(24):
+        if WINDOWS_SNAPSHOT.exists() and WINDOWS_SNAPSHOT.stat().st_mtime_ns > previous:
+            return
+        time.sleep(0.5)
+    raise TimeoutError("Windows snapshot did not advance")
+
+
+def main():
+    target = sys.stdin.buffer.readline(32).strip()
+    if target not in {b"windows", b"wsl", b"docker"}:
+        print("error", flush=True)
+        return
+    name = target.decode("ascii")
+    try:
+        with (STATE / f"{name}.lock").open("a") as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            if name == "windows":
+                refresh_windows()
+            elif name == "wsl":
+                write_snapshot(name, {"memory": memory()})
+            else:
+                write_snapshot(name, {"projects": projects()})
+    except (subprocess.SubprocessError, OSError, ValueError) as exc:
+        print(f"Metrics refresh failed for {name}: {type(exc).__name__}", file=sys.stderr)
+        print("error", flush=True)
+        return
+    print("ok", flush=True)
 
 
 if __name__ == "__main__":

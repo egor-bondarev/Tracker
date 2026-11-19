@@ -1,0 +1,12 @@
+[Unit]
+Description=Accept manual homelab metrics refresh requests
+
+[Socket]
+ListenStream=/run/homelab-metrics/refresh.sock
+DirectoryMode=0755
+SocketMode=0666
+Accept=yes
+MaxConnections=8
+
+[Install]
+WantedBy=sockets.target

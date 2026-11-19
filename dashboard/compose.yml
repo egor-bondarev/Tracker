@@ -14,5 +14,6 @@ services:
     volumes:
       - "${DASHBOARD_WINDOWS_METRICS_DIR:-./metrics/windows}:/metrics/windows:ro"
       - "${DASHBOARD_WSL_METRICS_DIR:-./metrics/wsl}:/metrics/wsl:ro"
+      - "${DASHBOARD_CONTROL_DIR:-./metrics/control}:/metrics/control:ro"
     extra_hosts:
       - "host.docker.internal:host-gateway"

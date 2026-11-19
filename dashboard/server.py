@@ -2,7 +2,8 @@
 
 import json
 import os
-from datetime import datetime, timezone
+import socket
+from datetime import datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -22,11 +23,27 @@ def read_snapshot(path):
     try:
         with path.open(encoding="utf-8-sig") as file:
             data = json.load(file)
-        timestamp = datetime.fromisoformat(data["collected_at"])
-        age = (datetime.now(timezone.utc) - timestamp).total_seconds()
+        if datetime.fromisoformat(data["collected_at"]).utcoffset() is None:
+            return {"state": "unavailable"}
     except (OSError, TypeError, KeyError, ValueError, OverflowError):
         return {"state": "unavailable"}
-    return {"state": "stale" if age > 150 else "current", "snapshot": data}
+    return {"state": "available", "snapshot": data}
+
+
+SOURCES = {
+    "windows": Path("/metrics/windows/windows.json"),
+    "wsl": Path("/metrics/wsl/wsl.json"),
+    "docker": Path("/metrics/wsl/docker.json"),
+}
+
+
+def request_refresh(source):
+    with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as connection:
+        connection.settimeout(28)
+        connection.connect("/metrics/control/refresh.sock")
+        connection.sendall(source.encode("ascii") + b"\n")
+        with connection.makefile("rb") as response:
+            return response.readline(16) == b"ok\n"
 
 
 class DashboardHandler(BaseHTTPRequestHandler):
@@ -40,6 +57,27 @@ class DashboardHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def send_json(self, payload, status=200):
+        self.send_content(json.dumps(payload).encode("utf-8"), "application/json", status)
+
+    def do_POST(self):
+        prefix = "/api/metrics/"
+        source = self.path[len(prefix):] if self.path.startswith(prefix) else ""
+        if source not in SOURCES:
+            self.send_json({"error": "Unknown metrics source"}, status=404)
+            return
+        if self.headers.get("X-Dashboard-Refresh") != "1":
+            self.send_json({"error": "Refresh header required"}, status=403)
+            return
+        try:
+            refreshed = request_refresh(source)
+        except OSError:
+            refreshed = False
+        if not refreshed:
+            self.send_json({"error": "Metrics refresh failed"}, status=503)
+            return
+        self.send_json(read_snapshot(SOURCES[source]))
+
     def do_GET(self):
         if self.path == "/favicon.ico":
             self.send_response(204)
@@ -47,11 +85,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
             return
 
         if self.path == "/api/metrics":
-            report = {
-                name: read_snapshot(Path("/metrics") / name / f"{name}.json")
-                for name in ("windows", "wsl")
-            }
-            self.send_content(json.dumps(report).encode("utf-8"), "application/json")
+            self.send_json({name: read_snapshot(path) for name, path in SOURCES.items()})
             return
 
         if self.path == "/api/tracker/check":
@@ -59,7 +93,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
                 os.environ.get("TRACKER_WEB_URL", "http://host.docker.internal:8080"),
                 os.environ.get("TRACKER_RECORD_URL", "http://host.docker.internal:8000"),
             )
-            self.send_content(json.dumps(report).encode("utf-8"), "application/json")
+            self.send_json(report)
             return
 
         asset = ASSETS.get(self.path)

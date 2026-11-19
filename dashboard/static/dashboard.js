@@ -61,21 +61,21 @@ function element(tag, text) {
   return node;
 }
 
-function displayMetrics(name, sample, entries) {
+function displayMetrics(name, entries) {
   const list = document.querySelector(`#${name}-metrics`);
-  const age = document.querySelector(`#${name}-age`);
   list.replaceChildren(...entries.map(([label, value]) => {
     const metric = element("div");
     metric.append(element("dt", label), element("dd", value));
     return metric;
   }));
-  age.dataset.state = sample.state;
-  if (!sample.snapshot) {
-    age.textContent = "Нет замера";
-    return;
-  }
-  const time = new Date(sample.snapshot.collected_at).toLocaleTimeString();
-  age.textContent = sample.state === "stale" ? `Замер устарел · ${time}` : `Замер в ${time}`;
+}
+
+function displaySampleTime(name, snapshot) {
+  const note = document.querySelector(`#${name}-age`);
+  delete note.dataset.state;
+  note.textContent = snapshot
+    ? `Последний замер: ${new Date(snapshot.collected_at).toLocaleString("ru")}`
+    : "Нет замера";
 }
 
 function displayProjects(projects) {
@@ -119,31 +119,64 @@ function displayProjects(projects) {
   }));
 }
 
-async function refreshMetrics() {
-  try {
-    const response = await fetch("/api/metrics", { cache: "no-store" });
-    if (!response.ok) throw new Error("Metrics request failed");
-    const { windows, wsl } = await response.json();
-    const host = windows.snapshot;
-    const memory = wsl.snapshot?.memory;
-    displayMetrics("windows", windows, host ? [
-      ["Загрузка CPU", Number.isFinite(host.cpu_percent) ? `${formatPercent.format(host.cpu_percent)}%` : "—"],
-      ["Доступная RAM", ratio(host.memory_available_bytes, host.memory_total_bytes)],
-      [`Свободно на ${host.disk_name}`, ratio(host.disk_free_bytes, host.disk_total_bytes)],
+function displaySnapshot(source, sample) {
+  const snapshot = sample?.snapshot;
+  if (source === "windows") {
+    displayMetrics(source, snapshot ? [
+      ["Загрузка CPU", Number.isFinite(snapshot.cpu_percent) ? `${formatPercent.format(snapshot.cpu_percent)}%` : "—"],
+      ["Доступная RAM", ratio(snapshot.memory_available_bytes, snapshot.memory_total_bytes)],
+      [`Свободно на ${snapshot.disk_name}`, ratio(snapshot.disk_free_bytes, snapshot.disk_total_bytes)],
     ] : []);
-    displayMetrics("wsl", wsl, memory ? [
+  } else if (source === "wsl") {
+    const memory = snapshot?.memory;
+    displayMetrics(source, memory ? [
       ["Доступная RAM", ratio(memory.available_bytes, memory.total_bytes)],
       ["Занято swap", ratio(memory.swap_used_bytes, memory.swap_total_bytes)],
     ] : []);
-    displayProjects(wsl.snapshot?.projects);
-  } catch {
-    const unavailable = { state: "unavailable" };
-    displayMetrics("windows", unavailable, []);
-    displayMetrics("wsl", unavailable, []);
-    displayProjects(null);
+  } else {
+    displayProjects(snapshot?.projects);
+  }
+  displaySampleTime(source, snapshot);
+}
+
+const refreshButtons = [...document.querySelectorAll("[data-refresh]")];
+for (const refresh of refreshButtons) {
+  const source = refresh.dataset.refresh;
+  refresh.addEventListener("click", async () => {
+    const note = document.querySelector(`#${source}-age`);
+    const previous = note.textContent.replace(/^Не удалось обновить\. /, "");
+    refresh.disabled = true;
+    delete note.dataset.state;
+    note.textContent = "Запрашиваю новый замер…";
+    try {
+      const response = await fetch(`/api/metrics/${source}`, {
+        method: "POST",
+        headers: { "X-Dashboard-Refresh": "1" },
+      });
+      if (!response.ok) throw new Error("Metrics refresh failed");
+      const sample = await response.json();
+      if (!sample.snapshot) throw new Error("Snapshot missing");
+      displaySnapshot(source, sample);
+    } catch {
+      note.dataset.state = "error";
+      note.textContent = `Не удалось обновить. ${previous}`;
+    } finally {
+      refresh.disabled = false;
+    }
+  });
+}
+
+async function loadSavedMetrics() {
+  let samples = {};
+  try {
+    const response = await fetch("/api/metrics");
+    if (response.ok) samples = await response.json();
   } finally {
-    setTimeout(refreshMetrics, 30000);
+    for (const refresh of refreshButtons) {
+      displaySnapshot(refresh.dataset.refresh, samples[refresh.dataset.refresh]);
+      refresh.disabled = false;
+    }
   }
 }
 
-refreshMetrics();
+loadSavedMetrics().catch(() => {});

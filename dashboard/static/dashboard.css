@@ -45,7 +45,19 @@ main { width: min(100% - 2rem, 60rem); }
 .metrics dt { color: #adbdce; }
 .metrics dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
 .metric-note { padding: .8rem 1.5rem; margin: 0; font-size: .875rem; }
-.metric-note[data-state="stale"] { color: #ffba9e; }
+.metric-note[data-state="error"] { color: #ffba9e; }
+header:has(.metric-refresh) { flex-direction: row; align-items: center; }
+.metric-refresh {
+  flex: 0 0 auto;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  padding: .3rem;
+  font-size: 1.4rem;
+  line-height: 1;
+  background: #253747;
+  color: #b8e9da;
+}
+.metric-refresh:hover:not(:disabled) { background: #344b60; }
 .project { padding: .85rem 1.5rem 1.1rem; border-top: 1px solid #354354; }
 .project h3 { margin: 0 0 .6rem; overflow-wrap: anywhere; }
 .table-scroll { overflow-x: auto; }

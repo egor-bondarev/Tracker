@@ -1,10 +1,11 @@
 [Unit]
-Description=Collect WSL and Docker metrics for the homelab dashboard
-After=docker.service
+Description=Run one requested homelab metrics sample
 
 [Service]
-Type=oneshot
 ExecStart=/usr/bin/python3 /usr/local/libexec/homelab-collect-metrics.py
+StandardInput=socket
+StandardOutput=socket
+StandardError=journal
 StateDirectory=homelab-metrics
 StateDirectoryMode=0755
-TimeoutStartSec=30
+RuntimeMaxSec=28

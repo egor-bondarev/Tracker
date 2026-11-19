@@ -169,52 +169,55 @@ Start-ScheduledTask -TaskName "Acer-WSL-Ports"
 From another LAN device, open the Windows LAN address on port 8088 at
 `/dashboard` and run the Tracker check.
 
-### Dashboard metrics collectors
+### Dashboard metrics on demand
 
-The dashboard reads two local snapshots. Set these paths in the dashboard's
-local Compose `.env` on a default WSL installation, alongside the existing bind
-address:
+The dashboard shows the last saved sample when opened. Its refresh buttons
+request a fresh sample for Windows, WSL, or Docker independently. There is no
+periodic collection or browser polling.
+
+Set these paths in the dashboard's local Compose `.env` on a default WSL
+installation, alongside the existing bind address:
 
 ```dotenv
 DASHBOARD_WINDOWS_METRICS_DIR=/mnt/c/ProgramData/AcerHomelab/metrics
 DASHBOARD_WSL_METRICS_DIR=/var/lib/homelab-metrics
+DASHBOARD_CONTROL_DIR=/run/homelab-metrics
 ```
 
-In elevated PowerShell, copy `Write-HostMetrics.ps1` into
+In elevated PowerShell, install `Write-HostMetrics.ps1` in
 `C:\ProgramData\AcerHomelab\collectors`. Restrict write access to the collector
-and metrics directories to Administrators and SYSTEM. Allow read access to the
-metrics directory for the Windows account that owns the WSL distribution. Register the Windows collector and start
-it once to produce the first snapshot:
+and metrics directories to Administrators and SYSTEM. Allow the Windows account
+that owns the WSL distribution to read the metrics directory.
+
+Register the Windows collector without triggers. Re-registering this way
+replaces any previous startup or recurring triggers:
 
 ```powershell
 $metricsAction = New-ScheduledTaskAction `
     -Execute "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" `
     -Argument "-NoProfile -NonInteractive -ExecutionPolicy Bypass -File C:\ProgramData\AcerHomelab\collectors\Write-HostMetrics.ps1"
-$repeat = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1) `
-    -RepetitionInterval (New-TimeSpan -Minutes 1)
-$boot = New-ScheduledTaskTrigger -AtStartup
 $principal = New-ScheduledTaskPrincipal -UserId SYSTEM -LogonType ServiceAccount
-$settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -MultipleInstances IgnoreNew `
+$settings = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew `
     -ExecutionTimeLimit (New-TimeSpan -Seconds 40) `
     -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
 Register-ScheduledTask -TaskName "Acer-HostMetrics" -Action $metricsAction `
-    -Trigger @($boot, $repeat) -Principal $principal -Settings $settings
-Start-ScheduledTask -TaskName "Acer-HostMetrics"
+    -Principal $principal -Settings $settings -Force
 ```
 
-In Ubuntu, run the following from the repository checkout used for the dashboard.
-The timer runs the Docker commands on the host and writes only the selected
-metrics. The dashboard container reads the files and has no Docker socket mount.
+In Ubuntu, run the following from the dashboard checkout. When upgrading an
+existing installation, disable the previous `homelab-metrics.timer` first:
 
 ```bash
+sudo systemctl disable --now homelab-metrics.timer
 sudo install -D -m 0644 deployment/wsl/collect_metrics.py /usr/local/libexec/homelab-collect-metrics.py
-sudo install -m 0644 deployment/wsl/homelab-metrics.{service,timer} /etc/systemd/system/
+sudo install -m 0644 deployment/wsl/homelab-metrics.socket deployment/wsl/homelab-metrics@.service /etc/systemd/system/
 sudo systemctl daemon-reload
-sudo systemctl enable --now homelab-metrics.timer
-sudo systemctl start homelab-metrics.service
+sudo systemctl enable --now homelab-metrics.socket
 sudo docker compose -f dashboard/compose.yml --env-file dashboard/.env up -d --build
 ```
 
-The browser reloads the snapshots every 30 seconds. Collectors replace each
-snapshot roughly once a minute. Snapshots older than 150 seconds are marked
-stale. These collectors only sample state and do not restart or repair services.
+On a new installation, skip the first command when the old timer is absent.
+Systemd starts a short-lived collector only when a refresh request reaches its
+local socket. The dashboard mounts the snapshots and socket directory
+read-only. The only accepted requests are fixed collection commands. The
+dashboard has no Docker socket mount.

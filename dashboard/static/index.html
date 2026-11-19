@@ -27,19 +27,29 @@
     </section>
     <div class="host-grid">
       <section aria-labelledby="windows-title">
-        <header><h2 id="windows-title">Acer · Windows</h2></header>
+        <header>
+          <h2 id="windows-title">Acer · Windows</h2>
+          <button type="button" class="metric-refresh" data-refresh="windows" aria-label="Обновить метрики Windows" title="Обновить метрики Windows" disabled>↻</button>
+        </header>
         <dl id="windows-metrics" class="metrics"></dl>
-        <p id="windows-age" class="metric-note">Загружаю замер…</p>
+        <p id="windows-age" class="metric-note" role="status">Загружаю замер…</p>
       </section>
       <section aria-labelledby="wsl-title">
-        <header><h2 id="wsl-title">Ubuntu · WSL</h2></header>
+        <header>
+          <h2 id="wsl-title">Ubuntu · WSL</h2>
+          <button type="button" class="metric-refresh" data-refresh="wsl" aria-label="Обновить метрики WSL" title="Обновить метрики WSL" disabled>↻</button>
+        </header>
         <dl id="wsl-metrics" class="metrics"></dl>
-        <p id="wsl-age" class="metric-note">Загружаю замер…</p>
+        <p id="wsl-age" class="metric-note" role="status">Загружаю замер…</p>
       </section>
     </div>
     <section aria-labelledby="projects-title">
-      <header><h2 id="projects-title">Контейнеры по проектам</h2></header>
+      <header>
+          <h2 id="projects-title">Контейнеры по проектам</h2>
+          <button type="button" class="metric-refresh" data-refresh="docker" aria-label="Обновить список и метрики контейнеров" title="Обновить список и метрики контейнеров" disabled>↻</button>
+        </header>
       <div id="projects"><p class="metric-note">Загружаю список…</p></div>
+      <p id="docker-age" class="metric-note" role="status">Загружаю замер…</p>
     </section>
   </main>
 </body>

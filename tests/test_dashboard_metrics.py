@@ -10,16 +10,16 @@ from deployment.wsl.collect_metrics import projects
 
 
 class DashboardMetricsTests(unittest.TestCase):
-    def test_missing_and_stale_snapshots_are_distinguishable(self):
+    def test_saved_samples_remain_available_until_a_manual_refresh(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "windows.json"
             self.assertEqual(read_snapshot(path), {"state": "unavailable"})
             now = datetime.now(timezone.utc)
-            for state, age in [("current", 5), ("stale", 200)]:
-                with self.subTest(state=state):
+            for age in (5, 200):
+                with self.subTest(age=age):
                     data = {"collected_at": (now - timedelta(seconds=age)).isoformat()}
                     path.write_text(json.dumps(data))
-                    self.assertEqual(read_snapshot(path), {"state": state, "snapshot": data})
+                    self.assertEqual(read_snapshot(path), {"state": "available", "snapshot": data})
 
     @patch("deployment.wsl.collect_metrics.docker_lines")
     def test_containers_are_grouped_by_compose_and_completed_jobs_have_no_stats(self, docker):
