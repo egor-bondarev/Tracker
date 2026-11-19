@@ -142,3 +142,29 @@ Get-NetTCPConnection -State Listen -LocalPort 8000,8001 -ErrorAction SilentlyCon
 ```
 
 Compare Ubuntu’s current IP address with the portproxy rules and check the containers and APIs. Running a command inside WSL may start a stopped distribution. Record the output of `wsl --list --verbose` first.
+
+
+### Optional homelab dashboard access
+
+Run the dashboard as a separate Compose project. Set
+`DASHBOARD_BIND_ADDRESS=0.0.0.0` in a local `.env` beside
+`dashboard/compose.yml` so Windows can reach the published port inside WSL.
+Keep the default dashboard port, TCP 8088.
+
+Install the current port forwarding script and add `-IncludeDashboard` to the
+existing `Acer-WSL-Ports` action arguments. Use `Set-ScheduledTask -Action` to
+keep the existing boot and event triggers. The action must still pass
+`-ListenAddress` and the correct WSL distribution name. Create a firewall rule
+for the dashboard from the private LAN.
+
+```powershell
+New-NetFirewallRule -Name "Homelab-Dashboard-LAN" `
+    -DisplayName "Homelab dashboard from LAN" -Direction Inbound -Action Allow `
+    -Protocol TCP -LocalPort 8088 -LocalAddress $lanAddress `
+    -RemoteAddress LocalSubnet -Profile Private
+
+Start-ScheduledTask -TaskName "Acer-WSL-Ports"
+```
+
+From another LAN device, open the Windows LAN address on port 8088 at
+`/dashboard` and run the Tracker check.

@@ -3,7 +3,9 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$ListenAddress,
 
-    [string]$Distribution = "Ubuntu-24.04"
+    [string]$Distribution = "Ubuntu-24.04",
+
+    [switch]$IncludeDashboard
 )
 
 $ErrorActionPreference = "Stop"
@@ -24,6 +26,7 @@ if ($keepAlive.State -ne "Running") {
 $wsl = "$env:SystemRoot\System32\wsl.exe"
 $netsh = "$env:SystemRoot\System32\netsh.exe"
 $ports = 8000, 8001, 8080
+if ($IncludeDashboard) { $ports += 8088 }
 
 $wslIp = $null
 for ($attempt = 1; $attempt -le 30; $attempt++) {
