@@ -183,5 +183,5 @@ python -m unittest discover -s tests -v
 ### Acer Windows startup
 
 See [the Windows startup runbook](deployment/windows/README.md) for the WSL
-keepalive task, port forwarding script, firewall rule and reboot verification.
-Recovery after sleep/hibernation is still under investigation.
+keepalive task, port forwarding, firewall rule and power/resume event triggers.
+The runbook describes which recovery scenarios have been verified on the Acer.

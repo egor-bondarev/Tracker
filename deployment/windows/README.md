@@ -10,13 +10,16 @@
 - API: TCP 8000 и 8001, профиль Wi-Fi Private;
 - Docker включён в systemd, контейнеры имеют restart policy.
 
-## Ограничение, выявленное 19 ноября
+## Восстановление после смены питания и пробуждения
 
-После выключения либо гибернации пользователь получил `Connection reset by peer`
-на обоих API. Причина пока не установлена. Это сохранение проверенной конфигурации
-загрузки, **не исправление восстановления после сна**. Триггеры AtStartup не являются
-триггерами пробуждения. Скрипт проверяет наличие слушателей Windows, но не HTTP-ответ
-приложения, актуальность контейнеров или дальнейшее изменение IP WSL.
+После отключения зарядки Ubuntu и KeepAlive оказались остановлены. У обоих
+заданий действовал запрет запуска и продолжения работы от батареи. Снимите
+эти ограничения и добавьте триггер событий к заданию портов. Скрипт запускает
+KeepAlive при необходимости и обновляет перенаправления. Ошибки HTTP не
+участвуют в запуске восстановления.
+
+Запуск по подключению зарядки проверен на Acer. Восстановление после сна и
+гибернации требует отдельной проверки на ноутбуке.
 
 ## Установка
 
@@ -44,6 +47,7 @@ $principal = New-ScheduledTaskPrincipal `
     -UserId "laptop-ah1r7pkt\bo098" -LogonType S4U -RunLevel Highest
 $settings = New-ScheduledTaskSettingsSet `
     -StartWhenAvailable -ExecutionTimeLimit ([TimeSpan]::Zero) `
+    -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
     -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1)
 Register-ScheduledTask -TaskName "Acer-WSL-KeepAlive" `
     -Action $action -Trigger $trigger -Principal $principal -Settings $settings
@@ -66,6 +70,7 @@ $principal = New-ScheduledTaskPrincipal `
     -UserId "laptop-ah1r7pkt\bo098" -LogonType S4U -RunLevel Highest
 $settings = New-ScheduledTaskSettingsSet `
     -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Minutes 5) `
+    -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
     -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1)
 Register-ScheduledTask -TaskName "Acer-WSL-Ports" `
     -Action $action -Trigger $trigger -Principal $principal -Settings $settings
@@ -75,6 +80,37 @@ Start-ScheduledTask -TaskName "Acer-WSL-Ports"
 Ожидается `Ready`, `LastTaskResult = 0`. Скрипт обновляет два portproxy-правила и,
 если слушателей на домашнем IP нет, перезапускает IP Helper. Это кратковременно
 затрагивает и другие перенаправления, обслуживаемые IP Helper.
+
+### Триггер событий Acer-WSL-Ports
+
+В свойствах задания сохраните триггер **При запуске** и добавьте **При событии →
+Настраиваемый → Создать фильтр событий → XML → Изменить запрос вручную**.
+Вставьте запрос:
+
+```xml
+<QueryList>
+  <Query Id="0" Path="System">
+    <Select Path="System">
+      *[System[Provider[@Name='Microsoft-Windows-Kernel-Power'] and EventID=105]
+        and EventData[Data[@Name='AcOnline']='true']]
+    </Select>
+    <Select Path="System">
+      *[System[(Provider[@Name='Microsoft-Windows-Power-Troubleshooter'] and EventID=1)
+        or (Provider[@Name='Microsoft-Windows-Kernel-Power'] and (EventID=107 or EventID=507))]]
+    </Select>
+  </Query>
+</QueryList>
+```
+
+В новом триггере поставьте задержку **30 секунд**. На вкладке **Параметры**
+выберите **Не запускать новый экземпляр**, если задание уже выполняется. Для
+ранее созданных заданий проверьте на вкладке **Условия**, что оба ограничения
+работы от батареи сняты.
+
+Для проверки отключите и снова подключите зарядку при работающей Windows.
+Примерно через минуту проверьте время последнего запуска `Acer-WSL-Ports`, код
+результата `0` и ответы обоих API с Mac. Повторите проверку отдельно после
+выхода из сна или гибернации.
 
 ### Брандмауэр
 

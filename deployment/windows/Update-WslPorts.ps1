@@ -1,6 +1,12 @@
 # Acer configuration verified after a Windows restart on 2026-11-18.
 # Run elevated, under the Windows account that owns Ubuntu-24.04.
 $ErrorActionPreference = "Stop"
+
+$keepAlive = Get-ScheduledTask -TaskName "Acer-WSL-KeepAlive"
+if ($keepAlive.State -ne "Running") {
+    Start-ScheduledTask -TaskName "Acer-WSL-KeepAlive"
+}
+
 $wsl = "$env:SystemRoot\System32\wsl.exe"
 $netsh = "$env:SystemRoot\System32\netsh.exe"
 
