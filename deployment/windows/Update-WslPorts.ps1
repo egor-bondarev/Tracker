@@ -1,6 +1,20 @@
-# Acer configuration verified after a Windows restart on 2026-11-18.
-# Run elevated, under the Windows account that owns Ubuntu-24.04.
+# Run elevated, under the Windows account that owns the WSL distribution.
+param(
+    [Parameter(Mandatory = $true)]
+    [string]$ListenAddress,
+
+    [string]$Distribution = "Ubuntu-24.04"
+)
+
 $ErrorActionPreference = "Stop"
+$listenIp = $null
+if ($ListenAddress -notmatch '^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$' -or
+    -not [System.Net.IPAddress]::TryParse($ListenAddress, [ref]$listenIp) -or
+    $listenIp.AddressFamily -ne [System.Net.Sockets.AddressFamily]::InterNetwork -or
+    $listenIp.Equals([System.Net.IPAddress]::Any)) {
+    throw "Specify a concrete Windows LAN IPv4 address in ListenAddress."
+}
+$ListenAddress = $listenIp.IPAddressToString
 
 $keepAlive = Get-ScheduledTask -TaskName "Acer-WSL-KeepAlive"
 if ($keepAlive.State -ne "Running") {
@@ -13,7 +27,7 @@ $ports = 8000, 8001, 8080
 
 $wslIp = $null
 for ($attempt = 1; $attempt -le 30; $attempt++) {
-    $output = & $wsl -d Ubuntu-24.04 --exec hostname -I
+    $output = & $wsl -d $Distribution --exec hostname -I
     if ($LASTEXITCODE -eq 0) {
         $candidate = (($output -join " ").Trim() -split "\s+")[0]
         $parsed = $null
@@ -30,7 +44,7 @@ if (-not $wslIp) { throw "Could not determine the Ubuntu IPv4 address." }
 
 foreach ($port in $ports) {
     & $netsh interface portproxy add v4tov4 `
-        listenaddress=192.168.0.38 listenport=$port `
+        listenaddress=$ListenAddress listenport=$port `
         connectaddress=$wslIp connectport=$port
     if ($LASTEXITCODE -ne 0) { throw "Could not configure port $port." }
 }
@@ -40,7 +54,7 @@ function Test-TrackerListeners {
     $listeners = @(Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue)
     foreach ($port in $ports) {
         $match = $listeners | Where-Object {
-            $_.LocalAddress -eq "192.168.0.38" -and $_.LocalPort -eq $port
+            $_.LocalAddress -eq $ListenAddress -and $_.LocalPort -eq $port
         }
         if (-not $match) { return $false }
     }

@@ -1,49 +1,42 @@
-# Автозапуск Acer: Windows → WSL2 → Docker
+# Acer startup: Windows → WSL2 → Docker
 
-Здесь сохранена настройка, введённая вручную и проверенная пользователем после
-перезагрузки 18 ноября 2026 года. Файлы восстановлены по истории настройки, а не
-выгружены с Acer. Они привязаны к конкретному ноутбуку:
+This runbook records the setup that was configured manually and verified after a reboot on November 18, 2026. The files were reconstructed from the setup history. Use the local configuration of the Windows host.
 
-- Windows: `laptop-ah1r7pkt\bo098`, учётная запись владеет дистрибутивом;
-- Ubuntu: `Ubuntu-24.04`, пользователь `egor`, сеть NAT;
-- домашний адрес Windows: `192.168.0.38`, закреплён в DHCP;
-- API: TCP 8000 и 8001, веб-интерфейс: TCP 8080, профиль Wi-Fi Private;
-- Docker включён в systemd, контейнеры имеют restart policy.
+- Use the Windows account that owns the WSL distribution.
+- The examples use an Ubuntu WSL2 distribution with NAT networking.
+- Use the Windows LAN IPv4 address reserved through DHCP. The examples use a documentation address.
+- API: TCP ports 8000 and 8001. Web interface: TCP port 8080. Wi-Fi profile: Private.
+- Docker starts through systemd, and the containers have restart policies.
 
-## Восстановление после смены питания и пробуждения
+## Recovery after power changes and resume
 
-После отключения зарядки Ubuntu и KeepAlive оказались остановлены. У обоих
-заданий действовал запрет запуска и продолжения работы от батареи. Снимите
-эти ограничения и добавьте триггер событий к заданию портов. Скрипт запускает
-KeepAlive при необходимости и обновляет перенаправления. Ошибки HTTP не
-участвуют в запуске восстановления.
+After AC power was disconnected, Ubuntu and KeepAlive were found stopped. Both tasks were configured to prevent startup on battery power and stop when switching to battery power. Clear both battery restrictions and add an event trigger to the port forwarding task. The script starts KeepAlive when needed and updates the forwarding rules. HTTP errors do not trigger recovery.
 
-Запуск по подключению зарядки проверен на Acer. Ручной выход из гибернации также проверен до добавления порта 8080.
+Starting the task when AC power is connected was verified on Acer. Manual resume from hibernation was also verified before port 8080 was added.
 
-## Установка
+## Setup
 
-Выполнять в PowerShell от администратора под указанной учётной записью Windows.
-Сначала скопировать `Update-WslPorts.ps1` из репозитория в
-`C:\ProgramData\AcerHomelab\Update-WslPorts.ps1`. Создать каталог при необходимости:
+Run the commands in the same elevated PowerShell session under the Windows account that owns the distribution. Replace the example address and set the distribution name to match the output of wsl --list --verbose. Copy `Update-WslPorts.ps1` from the repository to `C:\ProgramData\AcerHomelab\Update-WslPorts.ps1`. Create the directory if needed.
 
 ```powershell
+$windowsUser = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
+$lanAddress = "192.0.2.10"
+$distribution = "Ubuntu-24.04"
+
 New-Item -ItemType Directory -Path C:\ProgramData\AcerHomelab -Force
 ```
 
-Не заменять рабочий скрипт без сохранения резервной копии. Каталог и скрипт должны
-быть недоступны для изменения недоверенным пользователям: задание запускает их
-с повышенными правами. Команды ниже предназначены для первоначального создания;
-если задания уже существуют, сначала проверить их, а не создавать повторно.
+Back up the existing script before replacing it. Restrict write access to the directory and script to trusted users because the task runs the script with elevated privileges. The commands below are for initial setup. If the tasks already exist, inspect their settings before making changes.
 
-### Удержание WSL
+### Keep WSL running
 
 ```powershell
 $action = New-ScheduledTaskAction `
     -Execute "$env:SystemRoot\System32\wsl.exe" `
-    -Argument "-d Ubuntu-24.04 -u egor --exec sleep infinity"
+    -Argument "-d ""$distribution"" --exec sleep infinity"
 $trigger = New-ScheduledTaskTrigger -AtStartup
 $principal = New-ScheduledTaskPrincipal `
-    -UserId "laptop-ah1r7pkt\bo098" -LogonType S4U -RunLevel Highest
+    -UserId $windowsUser -LogonType S4U -RunLevel Highest
 $settings = New-ScheduledTaskSettingsSet `
     -StartWhenAvailable -ExecutionTimeLimit ([TimeSpan]::Zero) `
     -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
@@ -53,38 +46,32 @@ Register-ScheduledTask -TaskName "Acer-WSL-KeepAlive" `
 Start-ScheduledTask -TaskName "Acer-WSL-KeepAlive"
 ```
 
-Режим S4U не сохраняет пароль и имеет ограничения доступа к сетевым ресурсам
-Windows. Работа до входа пользователя проверена на этом Acer. Для задания
-KeepAlive ожидается `Running`, код `267009` (`0x41301`: выполняется).
+S4U does not store a password and limits access to Windows network resources. Starting before user sign-in was verified on this Acer. The expected KeepAlive state is `Running`, with result code `267009` (`0x41301`, task is running).
 
-### Перенаправление портов
+### Port forwarding
 
 ```powershell
-$action = New-ScheduledTaskAction `
+$portAction = New-ScheduledTaskAction `
     -Execute "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" `
-    -Argument "-NoProfile -ExecutionPolicy Bypass -File C:\ProgramData\AcerHomelab\Update-WslPorts.ps1"
+    -Argument "-NoProfile -ExecutionPolicy Bypass -File C:\ProgramData\AcerHomelab\Update-WslPorts.ps1 -ListenAddress $lanAddress -Distribution ""$distribution"""
 $trigger = New-ScheduledTaskTrigger -AtStartup
 $trigger.Delay = "PT30S"
 $principal = New-ScheduledTaskPrincipal `
-    -UserId "laptop-ah1r7pkt\bo098" -LogonType S4U -RunLevel Highest
+    -UserId $windowsUser -LogonType S4U -RunLevel Highest
 $settings = New-ScheduledTaskSettingsSet `
     -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Minutes 5) `
     -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
     -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1)
 Register-ScheduledTask -TaskName "Acer-WSL-Ports" `
-    -Action $action -Trigger $trigger -Principal $principal -Settings $settings
+    -Action $portAction -Trigger $trigger -Principal $principal -Settings $settings
 Start-ScheduledTask -TaskName "Acer-WSL-Ports"
 ```
 
-Ожидается `Ready`, `LastTaskResult = 0`. Скрипт обновляет правила portproxy для TCP 8000, 8001 и 8080 и,
-если слушателей на домашнем IP нет, перезапускает IP Helper. Это кратковременно
-затрагивает и другие перенаправления, обслуживаемые IP Helper.
+The expected state is `Ready`, with `LastTaskResult = 0`. The script updates the portproxy rules for TCP ports 8000, 8001, and 8080. If Windows is not listening on the LAN address, the script restarts IP Helper. This briefly interrupts other port forwarding rules managed by IP Helper.
 
-### Триггер событий Acer-WSL-Ports
+### Event trigger for Acer-WSL-Ports
 
-В свойствах задания сохраните триггер **При запуске** и добавьте **При событии →
-Настраиваемый → Создать фильтр событий → XML → Изменить запрос вручную**.
-Вставьте запрос:
+In the task properties, keep the **At startup** trigger and add **On an event → Custom → New Event Filter → XML → Edit query manually**. Paste the following query.
 
 ```xml
 <QueryList>
@@ -101,47 +88,48 @@ Start-ScheduledTask -TaskName "Acer-WSL-Ports"
 </QueryList>
 ```
 
-В новом триггере поставьте задержку **30 секунд**. На вкладке **Параметры**
-выберите **Не запускать новый экземпляр**, если задание уже выполняется. Для
-ранее созданных заданий проверьте на вкладке **Условия**, что оба ограничения
-работы от батареи сняты.
+Set a **30-second delay** on the new trigger. On the **Settings** tab, select **Do not start a new instance** if the task is already running. For existing tasks, check the **Conditions** tab to make sure both battery restrictions are cleared.
 
-Для проверки отключите и снова подключите зарядку при работающей Windows.
-Примерно через минуту проверьте время последнего запуска `Acer-WSL-Ports`, код
-результата `0` и ответы обоих API с Mac. Повторите проверку отдельно после
-выхода из сна или гибернации.
+To verify the trigger, disconnect and reconnect AC power while Windows is running. After about a minute, check the last run time of `Acer-WSL-Ports`, confirm that its result is `0`, and verify that both APIs respond from the Mac. Repeat the check separately after resuming from sleep or hibernation.
 
-### Брандмауэр
+### Firewall
 
-Создать один раз:
+Create these rules once.
 
 ```powershell
 New-NetFirewallRule -Name "Tracker-API-LAN" `
     -DisplayName "Tracker API from LAN" -Direction Inbound -Action Allow `
-    -Protocol TCP -LocalPort 8000,8001 -LocalAddress 192.168.0.38 `
+    -Protocol TCP -LocalPort 8000,8001 -LocalAddress $lanAddress `
     -RemoteAddress LocalSubnet -Profile Private
 
 New-NetFirewallRule -Name "Tracker-Web-LAN" `
     -DisplayName "Tracker Web from LAN" -Direction Inbound -Action Allow `
-    -Protocol TCP -LocalPort 8080 -LocalAddress 192.168.0.38 `
+    -Protocol TCP -LocalPort 8080 -LocalAddress $lanAddress `
     -RemoteAddress LocalSubnet -Profile Private
 ```
 
-На уже настроенном Acer добавьте только правило `Tracker-Web-LAN`. Скопируйте
-новую версию скрипта портов и выполните `Start-ScheduledTask -TaskName "Acer-WSL-Ports"`.
-После запуска контейнера откройте `http://192.168.0.38:8080` с Mac.
+On a host with API access already configured, create only the web firewall rule if it
+is missing. When upgrading an existing task, use the port forwarding section above
+to define $portAction, then apply the new action after copying the updated script
+so the task passes the local address. Existing event triggers are preserved.
 
-## Проверка после перезагрузки
-
-Подождать 2–3 минуты, не входить в Windows и не запускать WSL вручную.
-На Mac проверить HTTP 200:
-
-```bash
-curl --connect-timeout 5 --max-time 10 -sS -o /dev/null -w 'Record: %{http_code}\n' http://192.168.0.38:8000/openapi.json
-curl --connect-timeout 5 --max-time 10 -sS -o /dev/null -w 'Analytic: %{http_code}\n' http://192.168.0.38:8001/openapi.json
+```powershell
+Set-ScheduledTask -TaskName "Acer-WSL-Ports" -Action $portAction
+Start-ScheduledTask -TaskName "Acer-WSL-Ports"
 ```
 
-При сбое сначала сохранить состояние, не перезапуская службы:
+Once the web container is running, open the host's LAN address on port 8080 from the Mac.
+
+## Verify after a reboot
+
+Wait two to three minutes before checking from the Mac. Leave Windows at the sign-in screen and let the scheduled tasks start WSL. Replace the example IP with the host LAN address. Both requests should return HTTP 200.
+
+```bash
+curl --connect-timeout 5 --max-time 10 -sS -o /dev/null -w 'Record: %{http_code}\n' http://192.0.2.10:8000/openapi.json
+curl --connect-timeout 5 --max-time 10 -sS -o /dev/null -w 'Analytic: %{http_code}\n' http://192.0.2.10:8001/openapi.json
+```
+
+If the requests fail, capture the current state before restarting any services.
 
 ```powershell
 Get-ScheduledTask -TaskName "Acer-WSL-KeepAlive","Acer-WSL-Ports" |
@@ -153,6 +141,4 @@ netsh interface portproxy show v4tov4
 Get-NetTCPConnection -State Listen -LocalPort 8000,8001 -ErrorAction SilentlyContinue
 ```
 
-Далее сравнить фактический IP Ubuntu с portproxy и проверить контейнеры/API.
-Вызов команды внутри WSL может запустить остановленный дистрибутив, поэтому
-сначала следует записать результат `wsl --list --verbose`.
+Compare Ubuntu’s current IP address with the portproxy rules and check the containers and APIs. Running a command inside WSL may start a stopped distribution. Record the output of `wsl --list --verbose` first.
