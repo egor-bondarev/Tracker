@@ -1,4 +1,4 @@
-name: Tracker release for Acer
+name: Publish Tracker release images
 on:
   push:
     branches: [main]
@@ -9,16 +9,12 @@ on:
         type: string
         default: main
         required: true
-      publish_only:
-        description: Publish images without requesting deployment
-        type: boolean
-        default: false
 
 permissions: {}
 
 jobs:
   resolve:
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'workflow_dispatch' || vars.ACER_AUTO_DEPLOY == 'true')
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -57,10 +53,6 @@ jobs:
     permissions:
       contents: read
       packages: write
-    outputs:
-      record: ${{ steps.images.outputs.record }}
-      analytics: ${{ steps.images.outputs.analytics }}
-      web: ${{ steps.images.outputs.web }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
@@ -91,33 +83,26 @@ jobs:
             echo "$component=$digest" >> "$GITHUB_OUTPUT"
           done
 
-  dispatch:
-    if: github.event_name == 'push' || !inputs.publish_only
-    needs: [resolve, publish]
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    environment: acer-dispatch
-    permissions: {}
-    steps:
-      - name: Request deployment from the private control repository
+      - name: Write the release manifest
         env:
-          CONTROL_REPO: ${{ vars.ACER_CONTROL_REPO }}
-          DISPATCH_TOKEN: ${{ secrets.ACER_DISPATCH_TOKEN }}
           SOURCE_SHA: ${{ needs.resolve.outputs.sha }}
-          RECORD: ${{ needs.publish.outputs.record }}
-          ANALYTICS: ${{ needs.publish.outputs.analytics }}
-          WEB: ${{ needs.publish.outputs.web }}
-          EVENT: ${{ github.event_name }}
+          RECORD: ${{ steps.images.outputs.record }}
+          ANALYTICS: ${{ steps.images.outputs.analytics }}
+          WEB: ${{ steps.images.outputs.web }}
         run: |
-          [[ "$CONTROL_REPO" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]]
-          : "${DISPATCH_TOKEN:?Configure ACER_DISPATCH_TOKEN in acer-dispatch}"
-          mode=manual
-          [[ "$EVENT" != push ]] || mode=auto
-          jq -n --arg sha "$SOURCE_SHA" --arg mode "$mode" --arg record "$RECORD" \
-            --arg analytics "$ANALYTICS" --arg web "$WEB" \
-            '{ref:"main",inputs:{operation:$mode,revision:$sha,record:$record,analytics:$analytics,web:$web}}' |
-            curl --fail-with-body --silent --show-error --max-time 20 \
-              -H "Authorization: Bearer $DISPATCH_TOKEN" -H 'Content-Type: application/json' \
-              --data-binary @- "https://api.github.com/repos/$CONTROL_REPO/actions/workflows/acer-deploy.yml/dispatches"
-          echo "Requested $mode deployment for $SOURCE_SHA in $CONTROL_REPO."
-          echo "Follow the deployment run in the private control repository." >> "$GITHUB_STEP_SUMMARY"
+          prefix="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/tracker-"
+          jq -n --arg repo "$GITHUB_REPOSITORY" --arg revision "$SOURCE_SHA" \
+            --arg run "$GITHUB_RUN_ID" --arg attempt "$GITHUB_RUN_ATTEMPT" \
+            --arg record "${prefix}record@$RECORD" --arg analytics "${prefix}analytics@$ANALYTICS" \
+            --arg web "${prefix}web@$WEB" \
+            '{version:1,repository:$repo,revision:$revision,run_id:$run,run_attempt:$attempt,
+              images:{record:$record,analytics:$analytics,web:$web}}' > "$RUNNER_TEMP/release.json"
+          printf 'Published images for commit `%s` (run `%s`).\n' "$SOURCE_SHA" "$GITHUB_RUN_ID" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload the release manifest
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: acer-release-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/release.json
+          if-no-files-found: error
+          retention-days: 30

@@ -229,7 +229,12 @@ binding in your local configuration so it also applies on future Compose runs.
 Use `TRACKER_WEB_URL` and `TRACKER_RECORD_URL` if Tracker is on different ports
 or a different host. These URLs are configured on the server.
 
-### GitHub Actions releases to Acer
+### Container releases
 
-See the [Acer release runbook](deployment/acer/README.md) for publishing images,
-automatic deployment from `main`, manual releases from trusted branches, and rollback.
+GitHub Actions tests each release from `main`, publishes Linux amd64 images to
+GHCR, and uploads a manifest with the source commit and immutable image digests.
+To publish a candidate from another trusted branch, run **Publish Tracker release
+images** from `main` and select the candidate in `source_branch`.
+
+Publication is the final step in this repository. Deployment approval, runner
+configuration, and rollback are managed separately.

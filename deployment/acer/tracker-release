@@ -1,3 +1,0 @@
-#!/bin/sh
-exec /usr/bin/env -i PATH=/usr/bin:/bin HOME=/root \
-    /usr/bin/python3 -Es /usr/local/libexec/tracker-deploy/tracker_release.py "$@"

@@ -14,7 +14,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      COMPOSE_PROJECT_NAME: tracker
       SMOKE_WEB_URL: http://127.0.0.1:8080
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -48,11 +47,6 @@ jobs:
           docker compose run --rm db_init
           docker compose down
           docker compose up -d
-          python tests/deployment_smoke.py verify
-      - name: Verify Acer release and rollback against the disposable stack
-        if: inputs.source_sha == ''
-        run: |
-          PYTHONPATH="$PWD" python tests/deployment_release_smoke.py
           python tests/deployment_smoke.py verify
       - name: Diagnostics
         if: failure()
