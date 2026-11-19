@@ -179,3 +179,9 @@ With the record service dependencies installed:
 ```bash
 python -m unittest discover -s tests -v
 ```
+
+### Acer Windows startup
+
+See [the Windows startup runbook](deployment/windows/README.md) for the WSL
+keepalive task, port forwarding script, firewall rule and reboot verification.
+Recovery after sleep/hibernation is still under investigation.

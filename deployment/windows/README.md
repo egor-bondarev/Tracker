@@ -1,0 +1,114 @@
+# Автозапуск Acer: Windows → WSL2 → Docker
+
+Здесь сохранена настройка, введённая вручную и проверенная пользователем после
+перезагрузки 18 ноября 2026 года. Файлы восстановлены по истории настройки, а не
+выгружены с Acer. Они привязаны к конкретному ноутбуку:
+
+- Windows: `laptop-ah1r7pkt\bo098`, учётная запись владеет дистрибутивом;
+- Ubuntu: `Ubuntu-24.04`, пользователь `egor`, сеть NAT;
+- домашний адрес Windows: `192.168.0.38`, закреплён в DHCP;
+- API: TCP 8000 и 8001, профиль Wi-Fi Private;
+- Docker включён в systemd, контейнеры имеют restart policy.
+
+## Ограничение, выявленное 19 ноября
+
+После выключения либо гибернации пользователь получил `Connection reset by peer`
+на обоих API. Причина пока не установлена. Это сохранение проверенной конфигурации
+загрузки, **не исправление восстановления после сна**. Триггеры AtStartup не являются
+триггерами пробуждения. Скрипт проверяет наличие слушателей Windows, но не HTTP-ответ
+приложения, актуальность контейнеров или дальнейшее изменение IP WSL.
+
+## Установка
+
+Выполнять в PowerShell от администратора под указанной учётной записью Windows.
+Сначала скопировать `Update-WslPorts.ps1` из репозитория в
+`C:\ProgramData\AcerHomelab\Update-WslPorts.ps1`. Создать каталог при необходимости:
+
+```powershell
+New-Item -ItemType Directory -Path C:\ProgramData\AcerHomelab -Force
+```
+
+Не заменять рабочий скрипт без сохранения резервной копии. Каталог и скрипт должны
+быть недоступны для изменения недоверенным пользователям: задание запускает их
+с повышенными правами. Команды ниже предназначены для первоначального создания;
+если задания уже существуют, сначала проверить их, а не создавать повторно.
+
+### Удержание WSL
+
+```powershell
+$action = New-ScheduledTaskAction `
+    -Execute "$env:SystemRoot\System32\wsl.exe" `
+    -Argument "-d Ubuntu-24.04 -u egor --exec sleep infinity"
+$trigger = New-ScheduledTaskTrigger -AtStartup
+$principal = New-ScheduledTaskPrincipal `
+    -UserId "laptop-ah1r7pkt\bo098" -LogonType S4U -RunLevel Highest
+$settings = New-ScheduledTaskSettingsSet `
+    -StartWhenAvailable -ExecutionTimeLimit ([TimeSpan]::Zero) `
+    -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1)
+Register-ScheduledTask -TaskName "Acer-WSL-KeepAlive" `
+    -Action $action -Trigger $trigger -Principal $principal -Settings $settings
+Start-ScheduledTask -TaskName "Acer-WSL-KeepAlive"
+```
+
+Режим S4U не сохраняет пароль и имеет ограничения доступа к сетевым ресурсам
+Windows. Работа до входа пользователя проверена на этом Acer. Для задания
+KeepAlive ожидается `Running`, код `267009` (`0x41301`: выполняется).
+
+### Перенаправление портов
+
+```powershell
+$action = New-ScheduledTaskAction `
+    -Execute "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" `
+    -Argument "-NoProfile -ExecutionPolicy Bypass -File C:\ProgramData\AcerHomelab\Update-WslPorts.ps1"
+$trigger = New-ScheduledTaskTrigger -AtStartup
+$trigger.Delay = "PT30S"
+$principal = New-ScheduledTaskPrincipal `
+    -UserId "laptop-ah1r7pkt\bo098" -LogonType S4U -RunLevel Highest
+$settings = New-ScheduledTaskSettingsSet `
+    -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Minutes 5) `
+    -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1)
+Register-ScheduledTask -TaskName "Acer-WSL-Ports" `
+    -Action $action -Trigger $trigger -Principal $principal -Settings $settings
+Start-ScheduledTask -TaskName "Acer-WSL-Ports"
+```
+
+Ожидается `Ready`, `LastTaskResult = 0`. Скрипт обновляет два portproxy-правила и,
+если слушателей на домашнем IP нет, перезапускает IP Helper. Это кратковременно
+затрагивает и другие перенаправления, обслуживаемые IP Helper.
+
+### Брандмауэр
+
+Создать один раз:
+
+```powershell
+New-NetFirewallRule -Name "Tracker-API-LAN" `
+    -DisplayName "Tracker API from LAN" -Direction Inbound -Action Allow `
+    -Protocol TCP -LocalPort 8000,8001 -LocalAddress 192.168.0.38 `
+    -RemoteAddress LocalSubnet -Profile Private
+```
+
+## Проверка после перезагрузки
+
+Подождать 2–3 минуты, не входить в Windows и не запускать WSL вручную.
+На Mac проверить HTTP 200:
+
+```bash
+curl --connect-timeout 5 --max-time 10 -sS -o /dev/null -w 'Record: %{http_code}\n' http://192.168.0.38:8000/openapi.json
+curl --connect-timeout 5 --max-time 10 -sS -o /dev/null -w 'Analytic: %{http_code}\n' http://192.168.0.38:8001/openapi.json
+```
+
+При сбое сначала сохранить состояние, не перезапуская службы:
+
+```powershell
+Get-ScheduledTask -TaskName "Acer-WSL-KeepAlive","Acer-WSL-Ports" |
+    Select-Object TaskName, State
+Get-ScheduledTaskInfo -TaskName "Acer-WSL-Ports" |
+    Select-Object LastRunTime, LastTaskResult
+wsl --list --verbose
+netsh interface portproxy show v4tov4
+Get-NetTCPConnection -State Listen -LocalPort 8000,8001 -ErrorAction SilentlyContinue
+```
+
+Далее сравнить фактический IP Ubuntu с portproxy и проверить контейнеры/API.
+Вызов команды внутри WSL может запустить остановленный дистрибутив, поэтому
+сначала следует записать результат `wsl --list --verbose`.
