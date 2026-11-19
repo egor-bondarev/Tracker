@@ -228,3 +228,8 @@ Windows forwarding and private-network firewall rule for TCP 8088. Store the
 binding in your local configuration so it also applies on future Compose runs.
 Use `TRACKER_WEB_URL` and `TRACKER_RECORD_URL` if Tracker is on different ports
 or a different host. These URLs are configured on the server.
+
+### GitHub Actions releases to Acer
+
+See the [Acer release runbook](deployment/acer/README.md) for publishing images,
+automatic deployment from `main`, manual releases from trusted branches, and rollback.

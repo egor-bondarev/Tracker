@@ -1,0 +1,37 @@
+# The live PostgreSQL service and volume remain in the existing tracker project.
+x-api: &api
+  restart: unless-stopped
+  user: "65534:65534"
+  read_only: true
+  tmpfs: [/tmp]
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  environment:
+    PYTHONDONTWRITEBYTECODE: "1"
+    DATABASE_HOST: tracker_database
+    DATABASE_PORT: "5432"
+    DATABASE_NAME: "${DATABASE_NAME:?Set DATABASE_NAME}"
+    DATABASE_USER: "${DATABASE_USER:?Set DATABASE_USER}"
+    DATABASE_PASSWORD: "${DATABASE_PASSWORD:?Set DATABASE_PASSWORD}"
+
+services:
+  record_service:
+    <<: *api
+    image: "${TRACKER_RECORD_IMAGE:?Required}"
+    command: [uvicorn, "main:app", --host, 0.0.0.0, --port, "8000"]
+    ports: ["${RECORD_SERVICE_PORT:-8000}:8000"]
+  analytic_service:
+    <<: *api
+    image: "${TRACKER_ANALYTICS_IMAGE:?Required}"
+    command: [uvicorn, "main:app", --host, 0.0.0.0, --port, "8001"]
+    ports: ["${ANALYTIC_SERVICE_PORT:-8001}:8001"]
+  web:
+    image: "${TRACKER_WEB_IMAGE:?Required}"
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    ports: ["8080:80"]
+
+networks:
+  default:
+    external: true
+    name: tracker_default
