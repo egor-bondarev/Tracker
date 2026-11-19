@@ -1,0 +1,7 @@
+**
+!scripts/
+!scripts/check_tracker.py
+!dashboard/
+!dashboard/server.py
+!dashboard/static/
+!dashboard/static/**

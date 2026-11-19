@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Домашний сервер</title>
+  <link rel="stylesheet" href="/dashboard.css">
+  <script src="/dashboard.js" defer></script>
+</head>
+<body>
+  <main>
+    <h1>Домашний сервер</h1>
+    <section aria-labelledby="tracker-title">
+      <header>
+        <div>
+          <h2 id="tracker-title">Tracker</h2>
+          <p id="summary" role="status">Проверка ещё не запущена</p>
+        </div>
+        <button type="button" id="check">Проверить Tracker</button>
+      </header>
+      <ul id="checks">
+        <li><span>Веб-интерфейс</span><span data-check="web">Ожидает проверки</span></li>
+        <li><span>Аналитика · чтение из базы</span><span data-check="analytics_db">Ожидает проверки</span></li>
+        <li><span>Record API · доступ к базе</span><span data-check="record_db">Ожидает проверки</span></li>
+      </ul>
+      <p id="checked-at" hidden></p>
+    </section>
+  </main>
+</body>
+</html>

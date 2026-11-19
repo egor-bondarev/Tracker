@@ -1,0 +1,39 @@
+:root {
+  color-scheme: dark;
+  font-family: system-ui, sans-serif;
+  background: #101720;
+  color: #f3f6fa;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; }
+main { width: min(100% - 2rem, 48rem); margin: 4rem auto; }
+h1 { margin: 0 0 2rem; font-size: clamp(1.8rem, 6vw, 2.6rem); }
+section { background: #18232f; border: 1px solid #354354; border-radius: 1rem; overflow: hidden; }
+header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.4rem 1.5rem; }
+h2 { margin: 0; font-size: 1.4rem; }
+p { margin: .35rem 0 0; color: #adbdce; }
+button {
+  border: 0;
+  border-radius: .55rem;
+  padding: .7rem 1rem;
+  color: #101720;
+  background: #9fddc8;
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+button:disabled { cursor: wait; opacity: .65; }
+button:focus-visible { outline: 2px solid white; outline-offset: 3px; }
+ul { list-style: none; padding: 0; margin: 0; }
+li { display: flex; justify-content: space-between; gap: .6rem 1.5rem; border-top: 1px solid #354354; padding: .95rem 1.5rem; }
+[data-check] { color: #adbdce; text-align: right; }
+[data-state="pass"] { color: #9fddc8; }
+[data-state="fail"] { color: #ffba9e; }
+#checked-at { padding: .85rem 1.5rem; border-top: 1px solid #354354; margin: 0; font-size: .875rem; }
+
+@media (max-width: 34rem) {
+  main { margin-top: 2rem; }
+  header, li { align-items: start; flex-direction: column; }
+  [data-check] { text-align: left; }
+}

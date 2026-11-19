@@ -1,0 +1,15 @@
+name: homelab-dashboard
+services:
+  dashboard:
+    build:
+      context: ..
+      dockerfile: dashboard/Dockerfile
+    init: true
+    restart: unless-stopped
+    ports:
+      - "${DASHBOARD_BIND_ADDRESS:-127.0.0.1}:${DASHBOARD_PORT:-8088}:8088"
+    environment:
+      TRACKER_WEB_URL: "${TRACKER_WEB_URL:-http://host.docker.internal:8080}"
+      TRACKER_RECORD_URL: "${TRACKER_RECORD_URL:-http://host.docker.internal:8000}"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

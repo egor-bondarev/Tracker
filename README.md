@@ -209,3 +209,22 @@ page, GraphQL can read tasks through Nginx, and the Record API can read the task
 table. An empty task list is valid. The JSON result contains one status per check,
 and the command exits with code 1 if any check fails. It does not create tasks,
 print task data, or restart services.
+
+### Homelab dashboard
+
+Run the dashboard as a separate Compose project after Tracker is running:
+
+```bash
+docker compose -f dashboard/compose.yml up -d --build
+```
+
+Open http://127.0.0.1:8088/dashboard on the Docker host. **Проверить Tracker**
+runs the three read-only checks on demand. The dashboard continues to serve
+its page when Tracker is stopped.
+
+The dashboard publishes on loopback by default. On a WSL host, set
+`DASHBOARD_BIND_ADDRESS=0.0.0.0` when LAN access is required and configure a
+Windows forwarding and private-network firewall rule for TCP 8088. Store the
+binding in your local configuration so it also applies on future Compose runs.
+Use `TRACKER_WEB_URL` and `TRACKER_RECORD_URL` if Tracker is on different ports
+or a different host. These URLs are configured on the server.
