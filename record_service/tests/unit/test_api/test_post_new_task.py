@@ -120,10 +120,10 @@ def test_description_field(db_session_local, is_task_finished, description_value
     assert new_task.description == result.description
 
     if is_task_finished:
-        assert str(new_task.timestamp) == result.finish_timestamp
+        assert new_task.timestamp == result.finish_timestamp
         assert result.start_timestamp is not None
     else:
-        assert str(new_task.timestamp) == result.start_timestamp
+        assert new_task.timestamp == result.start_timestamp
         assert result.finish_timestamp is None
 
 @allure.epic("Unit tests")
@@ -154,7 +154,7 @@ def test_all_is_correct(db_session_local, remove_test_data):
     remove_test_data["id"] = [result.id]
 
     assert description == result.description
-    assert str(start_timestamp) == result.start_timestamp
+    assert start_timestamp == result.start_timestamp
     assert result.finish_timestamp is None
 
 @allure.epic("Unit tests")
@@ -174,5 +174,5 @@ def test_description_repeated_value(db_session_local, remove_test_data):
     remove_test_data["id"] = [result.id, existed_record.id]
 
     assert existed_record.description == result.description
-    assert str(start_timestamp) == result.start_timestamp
+    assert start_timestamp == result.start_timestamp
     assert result.finish_timestamp is None

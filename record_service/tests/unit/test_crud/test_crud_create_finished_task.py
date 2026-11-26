@@ -23,7 +23,7 @@ def test_description_repeated_value(db_session_local, remove_test_data):
     assert existed_task.description == result.description
     assert existed_task.id != result.id
     assert existed_task.finish_timestamp == result.start_timestamp
-    assert str(new_item.timestamp) == result.finish_timestamp
+    assert new_item.timestamp == result.finish_timestamp
 
 @allure.epic("Unit tests")
 @allure.feature("CRUD")
@@ -39,7 +39,7 @@ def test_correct(db_session_local,remove_test_data):
     remove_test_data["id"] = [result.id]
 
     assert new_item.description == result.description
-    assert str(new_item.timestamp) == result.finish_timestamp
+    assert new_item.timestamp == result.finish_timestamp
 
 @allure.epic("Unit tests")
 @allure.feature("CRUD")
@@ -56,4 +56,4 @@ def test_symbols_in_description_field(db_session_local, remove_test_data, descri
     remove_test_data["id"] = [result.id]
 
     assert description_value == result.description
-    assert str(new_item.timestamp) == result.finish_timestamp
+    assert new_item.timestamp == result.finish_timestamp

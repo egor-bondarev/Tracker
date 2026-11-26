@@ -68,16 +68,16 @@ jobs:
           trap 'docker logout ghcr.io >/dev/null' EXIT
           for component in record analytics web; do
             case "$component" in
-              record) context=record_service/src ;;
-              analytics) context=analytic_service/src ;;
-              web) context=web_ui/tracker-client ;;
+              record) context=. dockerfile=record_service/src/Dockerfile ;;
+              analytics) context=. dockerfile=analytic_service/src/Dockerfile ;;
+              web) context=web_ui/tracker-client dockerfile=web_ui/tracker-client/Dockerfile ;;
             esac
             image="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/tracker-$component"
             docker buildx build --platform linux/amd64 --push \
               --label "org.opencontainers.image.source=https://github.com/$GITHUB_REPOSITORY" \
               --label "org.opencontainers.image.revision=$SOURCE_SHA" \
               --metadata-file "$RUNNER_TEMP/image-$component.json" \
-              -t "$image:sha-$SOURCE_SHA" "$context"
+              -t "$image:sha-$SOURCE_SHA" -f "$dockerfile" "$context"
             digest=$(jq -er '."containerimage.digest"' "$RUNNER_TEMP/image-$component.json")
             [[ "$digest" =~ ^sha256:[a-f0-9]{64}$ ]]
             echo "$component=$digest" >> "$GITHUB_OUTPUT"

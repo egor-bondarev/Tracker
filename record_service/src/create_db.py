@@ -1,4 +1,4 @@
-"""Initialize a fresh Tracker database; safe to rerun without deleting tasks."""
+"""Create the Tracker role and database, then apply migrations; safe to rerun."""
 
 import time
 from enum import Enum
@@ -82,23 +82,33 @@ def create_database(settings):
         connection.close()
 
 
-def create_tables(settings):
-    connection = settings.get_connection(ConnectionRole.user)
-    try:
-        with connection:
-            with connection.cursor() as cursor:
-                # Preserve the existing schema. Schema migrations are a separate step.
-                cursor.execute(
-                    'CREATE TABLE IF NOT EXISTS tasks ('
-                    'id SERIAL PRIMARY KEY, start_timestamp VARCHAR, '
-                    'finish_timestamp VARCHAR, description VARCHAR NOT NULL, duration VARCHAR)'
-                )
-    finally:
-        connection.close()
+def migration_url(settings):
+    from sqlalchemy.engine import URL
+
+    return URL.create(
+        'postgresql+psycopg2', username=settings.database_user,
+        password=settings.database_password, host=settings.database_host,
+        port=settings.database_port, database=settings.database_name,
+    )
+
+
+def run_migrations(settings):
+    """Bring the schema to the latest Alembic revision as the application role."""
+    from pathlib import Path
+
+    from alembic import command
+    from alembic.config import Config
+    import tracker_db
+
+    settings.get_connection(ConnectionRole.user).close()  # bounded wait, clear error
+    config = Config()
+    config.set_main_option('script_location', str(Path(tracker_db.__file__).parent / 'migrations'))
+    config.attributes['sqlalchemy.url'] = migration_url(settings)
+    command.upgrade(config, 'head')
 
 
 if __name__ == '__main__':
     settings = Settings()
     create_database(settings)
-    create_tables(settings)
+    run_migrations(settings)
     print('Tracker database initialized', flush=True)

@@ -101,7 +101,7 @@ def test_correct(db_session_local, remove_test_data):
     remove_test_data["id"] = [result.id]
 
     assert new_item.description == result.description
-    assert str(new_item.timestamp) == result.start_timestamp
+    assert new_item.timestamp == result.start_timestamp
     assert result.finish_timestamp is None
 
 @allure.epic("Unit tests")
@@ -119,7 +119,7 @@ def test_symbols_in_description_field(db_session_local, remove_test_data, descri
     remove_test_data["id"] = [result.id]
 
     assert description_value == result.description
-    assert str(new_item.timestamp) == result.start_timestamp
+    assert new_item.timestamp == result.start_timestamp
     assert result.finish_timestamp is None
 
 @allure.epic("Unit tests")
