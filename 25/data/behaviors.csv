@@ -1,8 +1,0 @@
-"BROKEN","EPIC","FAILED","FEATURE","PASSED","SKIPPED","STORY","UNKNOWN"
-"0","Unit tests","0","CRUD","2","0","Finish task","0"
-"0","Unit tests","0","API","15","0","POST new task","0"
-"0","Unit tests","0","API","7","0","POST finish task","0"
-"0","Unit tests","0","CRUD","11","0","Add new task","0"
-"0","Component tests","0","API","25","0","POST new task","0"
-"0","Component tests","0","API","7","0","POST finish task","0"
-"0","Unit tests","0","CRUD","4","0","Add new finished task","0"
