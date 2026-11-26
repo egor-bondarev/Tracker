@@ -184,17 +184,6 @@ keepalive task, port forwarding, firewall rule and power/resume event triggers.
 The runbook describes which recovery scenarios have been verified on the Acer.
 
 
-### Sample service test configuration
-
-Copy sampleService/.env.testing.example to sampleService/.env.testing, then set
-distinct local test passwords for DATABASE_ADMIN_PASSWORD and DATABASE_PASSWORD.
-The local file is ignored by Git. Use disposable credentials for this service.
-
-```bash
-cp sampleService/.env.testing.example sampleService/.env.testing
-chmod 600 sampleService/.env.testing
-```
-
 ### Check Tracker availability
 
 After starting Compose, run:
