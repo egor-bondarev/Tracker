@@ -1,3 +1,4 @@
+import re
 import pytest
 import allure
 from fastapi import status
@@ -240,3 +241,34 @@ def test_finish_task_already_finished_task_id_field(db_session_local, remove_tes
 
     assert response.status_code == status.HTTP_409_CONFLICT
     assert str(existed_task.id) in response.json()["detail"]
+
+@allure.epic("Component tests")
+@allure.feature("API")
+@allure.story("POST new task")
+@pytest.mark.parametrize("is_task_finished", [True, False])
+def test_new_task_response_shape(is_task_finished, remove_test_data, db_session_local):
+
+    response = api_helper.post_new_task(
+        generators.custom_string(), generators.timestamp_now(), is_task_finished)
+
+    remove_test_data["action"] = 'teardown'
+    remove_test_data["id"] = [response.json()['id']]
+
+    assert response.status_code == status.HTTP_200_OK
+    if is_task_finished:
+        assert set(response.json()) == {'id', 'duration'}
+        assert re.fullmatch(r'\d{2,}:\d{2}:\d{2}', response.json()['duration'])
+    else:
+        assert set(response.json()) == {'id'}
+
+@allure.epic("Component tests")
+@allure.feature("API")
+@allure.story("POST finish task")
+def test_finish_task_response_has_id_and_duration(create_started_record):
+
+    _, task = create_started_record
+    response = api_helper.post_finish_task(task.id, generators.timestamp_now())
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json()['id'] == task.id
+    assert re.fullmatch(r'\d{2,}:\d{2}:\d{2}', response.json()['duration'])

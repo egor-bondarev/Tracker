@@ -11,9 +11,11 @@ from src.crud import task
 
 router = APIRouter()
 
+# The finished model comes first: pydantic uses the first union member that fits, and a
+# started task (no duration) only fits TaskStartedResponse.
 @router.post(
     path='/new/',
-    response_model=schemas.TaskStartedResponse | schemas.TaskFinishedResponse)
+    response_model=schemas.TaskFinishedResponse | schemas.TaskStartedResponse)
 def post_new_task(
     new_task: schemas.NewTask,
     is_task_finished: bool=Query(...),
