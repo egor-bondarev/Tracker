@@ -83,6 +83,26 @@ This service works with desktop gui and write data to database.
     POST /new/?is_task_finished=true
     ```
 
+The `/new/` and `/finish/` paths above are under the `/add-record` prefix. Both
+`/new/` variants accept an optional `category_id`. Timestamps may be in the past;
+a finish time before the start time is rejected with 422.
+
+- **Read and correct tasks**:
+    ```
+    GET    /tasks/active        # running task or null
+    GET    /tasks/{id}
+    PATCH  /tasks/{id}          # description, category_id, start_timestamp, finish_timestamp
+    DELETE /tasks/{id}
+    ```
+
+- **Categories** (unique names; archived ones are hidden by default and cannot be
+  assigned to new tasks):
+    ```
+    GET   /categories?include_archived=false
+    POST  /categories           # {"name": "..."}
+    PATCH /categories/{id}      # {"name": "...", "archived": true}
+    ```
+
 #### **Analytic service:**
 This service works with web ui and show tasks list via GraphQL request.
 
@@ -90,16 +110,20 @@ This service works with web ui and show tasks list via GraphQL request.
 
 - **Get Tasks from period**: 
 ```graphql
-query GetTasksInPeriod($startDate: DateTime!, $endDate: DateTime!) {
-    tasksInPeriod(start_date: $startDate, end_date: $endDate) {
+query GetTasksInPeriod($startDate: String!, $endDate: String!) {
+    tasksInPeriod(startDate: $startDate, endDate: $endDate) {
         id
         description
-        start_timestamp
-        finish_timestamp
+        startTimestamp
+        finishTimestamp
         duration
+        category { id name archived }
     }
+    categories(includeArchived: false) { id name }
 }
 ```
+Tasks started in the period are returned if they finished in it or are still
+running (`finishTimestamp` and `duration` are null for a running task).
 
 ## Run autotests
 

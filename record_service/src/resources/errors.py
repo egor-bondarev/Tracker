@@ -17,3 +17,11 @@ class DescriptionIsTooLong(str, Enum):
 class TimestampFieldError(str, Enum):
     STATUS_CODE = 422
     DETAIL = "Timestamp field type is wrong."
+
+class EmptyCategoryNameError(str, Enum):
+    STATUS_CODE = 422
+    DETAIL = "Category name can't be empty."
+
+class CategoryNameIsTooLong(str, Enum):
+    STATUS_CODE = 422
+    DETAIL = "Category name is too long"

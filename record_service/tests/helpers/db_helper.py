@@ -11,8 +11,8 @@ def add_full_record(session: Session):
 
     db_item = models.Task(
         description=str(uuid.uuid4()),
-        start_timestamp=generators.timestamp_now(),
-        finish_timestamp=generators.timestamp_now() + delta)
+        start_timestamp=generators.timestamp_now() - delta,
+        finish_timestamp=generators.timestamp_now())
 
     session.add(db_item)
     session.commit()
