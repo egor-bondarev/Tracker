@@ -61,6 +61,7 @@ class TaskStartedResponse(BaseModel):
     id: int
 
 class TaskFinishedResponse(BaseModel):
+    id: int
     duration: str
 
     @field_validator('duration', mode='before')
