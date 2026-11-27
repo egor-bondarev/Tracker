@@ -56,6 +56,9 @@ def check_tracker(web_url, record_url, timeout=3):
     check("record_db", record_url + "/ready",
           lambda body: json.loads(body) == {"status": "ready"},
           "Record API did not report readiness")
+    check("record_proxy", web_url + "/api/ready",
+          lambda body: json.loads(body) == {"status": "ready"},
+          "Record API is not reachable through the web address")
     return {"ok": all(item["ok"] for item in checks), "checks": checks}
 
 

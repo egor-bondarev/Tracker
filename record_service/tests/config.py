@@ -32,6 +32,19 @@ class AnalyticsSettings(BaseSettings):
     def graphql_url(self) -> str:
         return f"http://{self.ANALYTIC_SERVICE_HOST}:{self.ANALYTIC_SERVICE_PORT}/graphql"
 
+class WebSettings(BaseSettings):
+    """The web UI port is fixed in docker-compose.yml; override for other setups."""
+    WEB_URL: str = "http://127.0.0.1:8080"
+
+    model_config = SettingsConfigDict(
+        env_file="./.env",
+        hide_input_in_errors=True,
+        extra='ignore')
+
+    @property
+    def web_url(self) -> str:
+        return self.WEB_URL.rstrip("/")
+
 class Settings(BaseSettings):
     database_user: str
     DATABASE_PASSWORD: str

@@ -77,6 +77,7 @@ services:
       - "8080:80"
     depends_on:
       - analytic_service
+      - record_service
 
 volumes:
   # Separate from the legacy Bitnami volume; never reuse incompatible PGDATA.

@@ -1,10 +1,12 @@
 ''' Database operations for user item. '''
 
+import uuid
 from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, not_
 from sqlalchemy.exc import NoResultFound, ArgumentError
-from src.crud.category import require_active_category
+from sqlalchemy.exc import IntegrityError
+from src.crud.category import require_active_category, require_existing_category
 from src.crud.errors import InvalidTimeRangeError, NotFoundError
 from src.models import models
 from src.schemas import schemas
@@ -107,3 +109,35 @@ def delete_task(db: Session, task_id: int) -> None:
 
     db.delete(get_task(db, task_id))
     db.commit()
+
+
+def sync_task(db: Session, client_id: uuid.UUID, item: schemas.TaskSync) -> tuple[models.Task, bool]:
+    ''' Create or replace the task a client identifies by its own id.
+
+    Returns the task and whether it was created. Sending the same state again changes nothing,
+    so a client can retry until it sees a response.
+    '''
+
+    require_existing_category(db, item.category_id)
+    _require_valid_range(item.start_timestamp, item.finish_timestamp)
+    values = item.model_dump()
+    found = db.query(models.Task).filter(models.Task.client_id == client_id).first()
+    created = found is None
+    if created:
+        found = models.Task(client_id=client_id, **values)
+        db.add(found)
+    else:
+        for field, value in values.items():
+            setattr(found, field, value)
+    try:
+        db.commit()
+    except IntegrityError:
+        # Another request created the same client_id first: apply this state to it.
+        db.rollback()
+        found = db.query(models.Task).filter(models.Task.client_id == client_id).one()
+        for field, value in values.items():
+            setattr(found, field, value)
+        db.commit()
+        created = False
+    db.refresh(found)
+    return found, created
