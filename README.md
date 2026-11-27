@@ -3,7 +3,7 @@
 This is a task tracking application built with a FastAPI backend, PostgreSQL database, and a React frontend with TypeScript. The application allows users to track their tasks, record start and end times, and calculate the duration of each task. Additionally, users can see their tasks using a GraphQL API.
 
 ## Features
-- **Task Tracking**: Start and stop tasks with a description via Desktop GUI.
+- **Task Tracking**: Start and stop tasks with a description and a category in a small desktop window (Windows and macOS) that keeps working offline.
 - **Time Duration Calculation**: Automatically calculate the duration of tasks.
 - **GraphQL API**: Query tasks within a specified time period.
 - **React Frontend**: View and query tasks through a user-friendly web interface.
@@ -13,7 +13,7 @@ This is a task tracking application built with a FastAPI backend, PostgreSQL dat
 - **Backend**: Python 3.11.3, FastAPI, SQLAlchemy, PostgreSQL, Pydantic
 - **Frontend**: React, TypeScript
 - **GraphQL**: Graphene (Python library for GraphQL)
-- **DesktopGUI**: Python 3.11.3, PyQT5
+- **Desktop app**: Tauri 2, React, TypeScript
 
 ## Installation
 
@@ -47,24 +47,20 @@ This is a task tracking application built with a FastAPI backend, PostgreSQL dat
    `web_ui/tracker-client` starts a dev server on port 3000 and proxies to analytics
    on host port 8001.
 
-4. **Run Desktop GUI** from the repository root:
-
-    ```bash
-    cd desktop_gui
-    python ./main.py
-    ```
-    ![alt text](image.png)
+4. **Run the desktop timer**: see [desktop/README.md](desktop/README.md) (Tauri;
+   Windows and macOS installers are built by CI). On first start enter the web
+   address, e.g. `http://192.168.0.38:8080`.
 
 ## Usage
 
-1. On desktop GUI type your task description and press Start. 
-2. After finishing your task press Stop.
-3. If you forgot to start your task, you may type description and press Stop. In this case start time will be a finish time from your previous task.
+1. In the desktop window type your task description, pick a category and press ▶.
+2. After finishing your task press ■.
+3. If you forgot to start your task, type the description and press the second ■: the task starts where your previous task finished.
 4. To see your tasks list go to web ui (http://localhost:8080), set start and finish time by mask "YYYY-MM-DD hh:mm:ss" and click "Show Tasks".
 
 ### Architecture
 #### **Record service:**
-This service works with desktop gui and write data to database.
+This service works with the desktop app and writes data to the database.
 
 **API Endpoints:**
 

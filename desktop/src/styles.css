@@ -1,0 +1,49 @@
+:root {
+  --bg: #ffffff; --surface: #ffffff; --raised: #f7f7f5; --text: #1f1f1d; --muted: #8a8984;
+  --secondary: #5f5e5a; --border: rgba(0, 0, 0, 0.12); --border-strong: rgba(0, 0, 0, 0.22);
+  --danger: #d93a3a; --success: #2f8a3e; --accent: #2f6fdd;
+  --edge: 12px; --gap: 8px;
+  color-scheme: light dark;
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-size: 13px; color: var(--text); background: var(--bg);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #262624; --surface: #262624; --raised: #30302e; --text: #ecebe6; --muted: #8f8e88;
+    --secondary: #b4b2a9; --border: rgba(255, 255, 255, 0.12); --border-strong: rgba(255, 255, 255, 0.24);
+    --danger: #f07070; --success: #6cc37a; --accent: #7aa7f0;
+  }
+}
+* { box-sizing: border-box; }
+html, body, #root { margin: 0; }
+body { user-select: none; }
+.app { display: flex; flex-direction: column; }
+.bar { display: flex; align-items: center; gap: var(--gap); min-height: 44px; padding: 0 var(--edge); border-bottom: 1px solid var(--border); }
+/* Borderless icon buttons are wider than their glyph: line the glyph up with the edge. */
+.bar > .icon-button.ghost:first-child { margin-left: -8px; }
+.bar > .icon-button.ghost:last-child { margin-right: -8px; }
+.grow { flex: 1; }
+.body { padding: var(--edge); display: flex; flex-direction: column; gap: var(--gap); }
+input, select { font: inherit; color: var(--text); background: var(--surface); width: 100%; height: 30px; padding: 0 8px; border: 1px solid var(--border-strong); border-radius: 6px; }
+input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+input:disabled, select:disabled { color: var(--secondary); background: var(--raised); }
+button { font: inherit; color: var(--text); background: transparent; border: 1px solid var(--border-strong); border-radius: 6px; height: 30px; padding: 0 12px; cursor: pointer; }
+button:hover:not(:disabled) { background: var(--raised); }
+button:disabled { color: var(--muted); cursor: default; }
+.icon-button { width: 32px; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
+.ghost { border-color: transparent; }
+.row { display: flex; align-items: center; gap: var(--gap); }
+.row > select, .row > input { flex: 1; min-width: 0; }
+.time { flex: 1; font-family: ui-monospace, "Cascadia Mono", Menlo, monospace; font-size: 15px; color: var(--muted); }
+.time.running { color: var(--text); }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--danger); display: inline-block; }
+.ok-icon { color: var(--success); display: inline-flex; }
+.menu { background: var(--raised); border: 1px solid var(--border-strong); border-radius: 8px; overflow: hidden; z-index: 2; }
+.menu button { width: 100%; height: 34px; padding: 0 var(--edge); border: 0; border-radius: 0; display: flex; align-items: center; gap: 10px; text-align: left; }
+.menu button + button { border-top: 1px solid var(--border); }
+.count { color: var(--danger); font-size: 12px; }
+.label { font-size: 12px; color: var(--secondary); margin: 0 0 -4px; }
+.label:not(:first-child) { margin-top: 4px; }
+.hint { font-size: 12px; color: var(--muted); margin: 0; }
+.hint.ok { color: var(--success); }
+.hint.error { color: var(--danger); }
