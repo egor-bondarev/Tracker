@@ -80,3 +80,26 @@ def create_started_record(remove_test_data):
     _remove_test_records(session, remove_test_data)
 
     session.close()
+
+
+@pytest.fixture(name="cleanup")
+def cleanup_fixture():
+    """Collects task and category ids created by a test and deletes them afterwards."""
+
+    created = {"tasks": [], "categories": []}
+    yield created
+
+    session = TestingSessionLocal()
+    try:
+        for task_id in created["tasks"]:
+            task = session.get(models.Task, task_id)
+            if task is not None:
+                session.delete(task)
+        session.flush()
+        for category_id in created["categories"]:
+            category = session.get(models.Category, category_id)
+            if category is not None:
+                session.delete(category)
+        session.commit()
+    finally:
+        session.close()

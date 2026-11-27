@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from sqlalchemy.exc import NoResultFound, ArgumentError
+from src.api.errors import http_errors
 from src.db import session
 from src.schemas import schemas
 from src.crud import task
@@ -20,10 +21,11 @@ def post_new_task(
     ''' POST new task. '''
 
     if isinstance(is_task_finished, bool):
-        if is_task_finished:
-            return task.create_finished_task(db=db, item=new_task)
+        with http_errors():
+            if is_task_finished:
+                return task.create_finished_task(db=db, item=new_task)
 
-        return task.create_task(db=db, item=new_task)
+            return task.create_task(db=db, item=new_task)
 
     raise HTTPException(status_code=422, detail='Flag is_task_finished is missing.')
 
@@ -32,7 +34,8 @@ def post_finish_task(new_task: schemas.FinishedTask, db: Session=Depends(session
     ''' POST user to db. '''
 
     try:
-        finished_task = task.finish_task(db=db, item=new_task)
+        with http_errors():
+            finished_task = task.finish_task(db=db, item=new_task)
     except ArgumentError as exc:
         raise HTTPException(status_code=409, detail=exc.args[0]) from exc
     except NoResultFound as exc:
