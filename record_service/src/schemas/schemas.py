@@ -1,6 +1,7 @@
 """ Pydantic models for request validation and response formatting. """
 
 import re
+import uuid
 from datetime import datetime, timedelta
 from typing import Optional
 from pydantic import BaseModel, field_validator
@@ -110,6 +111,7 @@ class CategoryResponse(BaseModel):
 
 class TaskResponse(BaseModel):
     id: int
+    client_id: Optional[uuid.UUID] = None
     description: str
     category_id: Optional[int] = None
     start_timestamp: Optional[datetime] = None
@@ -143,4 +145,20 @@ class TaskUpdate(BaseModel):
     @field_validator('finish_timestamp', mode='before')
     def finish_is_valid(v):
         # null reopens the task as the active one
+        return None if v is None else timestamp_from_text(v)
+
+
+class TaskSync(BaseModel):
+    """Full state of a task kept by an offline-capable client; resending it is harmless."""
+    description: str
+    category_id: Optional[int] = None
+    start_timestamp: datetime
+    finish_timestamp: Optional[datetime] = None
+
+    @field_validator('description')
+    def description_check(v):
+        return description_is_valid(v)
+
+    @field_validator('start_timestamp', 'finish_timestamp', mode='before')
+    def timestamp_is_valid(v):
         return None if v is None else timestamp_from_text(v)

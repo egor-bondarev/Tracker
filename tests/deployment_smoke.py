@@ -52,6 +52,7 @@ if __name__ == '__main__':
     if WEB:
         with urlopen(WEB, timeout=5) as response:
             assert b'id="root"' in response.read(), 'Tracker page is missing the React root'
+        assert request(WEB + '/api/ready') == {'status': 'ready'}, 'Record API is not proxied'
     if args.phase == 'create':
         start = (datetime.now(timezone.utc) + timedelta(days=1)).replace(tzinfo=None, microsecond=0)
         task = request(RECORD + '/add-record/new/?is_task_finished=false', {

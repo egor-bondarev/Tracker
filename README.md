@@ -95,6 +95,16 @@ a finish time before the start time is rejected with 422.
     DELETE /tasks/{id}
     ```
 
+- **Sync a task from an offline-capable client** (idempotent; the client generates
+  the UUID and sends the full task state, so retries never create duplicates;
+  201 on create, 200 on update):
+    ```
+    PUT /tasks/by-client-id/{uuid}   # description, category_id, start_timestamp, finish_timestamp
+    ```
+
+The web server also proxies this API under `/api/` (for example
+`http://<host>:8080/api/tasks/active`), so desktop clients need only the web address.
+
 - **Categories** (unique names; archived ones are hidden by default and cannot be
   assigned to new tasks):
     ```

@@ -1,8 +1,9 @@
 """SQLAlchemy models for the Tracker database. Schema changes need an Alembic migration."""
 
+import uuid
 from datetime import datetime, timedelta
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, false
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Uuid, false
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -28,6 +29,9 @@ class Task(Base):
     finish_timestamp: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     category_id: Mapped[int | None] = mapped_column(
         ForeignKey('categories.id', ondelete='SET NULL'), nullable=True)
+    # Set by clients that queue tasks offline; makes resending a task idempotent.
+    client_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, nullable=True, unique=True, index=True)
 
     category: Mapped[Category | None] = relationship()
 

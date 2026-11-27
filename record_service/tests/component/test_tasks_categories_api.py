@@ -138,3 +138,41 @@ def test_graphql_returns_category_and_running_task(cleanup):
     assert task["categoryId"] == cat["id"]
     assert task["category"] == {"id": cat["id"], "name": cat["name"], "archived": False}
     assert cat["id"] in [c["id"] for c in data["categories"]]
+
+
+@allure.epic("Component tests")
+@allure.feature("API")
+@allure.story("Sync task")
+def test_sync_task_is_idempotent(cleanup):
+    url = f"{BASE_URL}/tasks/by-client-id/{uuid.uuid4()}"
+    start = datetime.now().replace(microsecond=0) - timedelta(days=1)
+    body = {"description": unique("offline"), "start_timestamp": str(start)}
+
+    created = requests.put(url, json=body, timeout=TIMEOUT)
+    assert created.status_code == status.HTTP_201_CREATED, created.text
+    cleanup["tasks"].append(created.json()["id"])
+
+    body["finish_timestamp"] = str(start + timedelta(minutes=30))
+    for _ in range(2):
+        updated = requests.put(url, json=body, timeout=TIMEOUT)
+        assert updated.status_code == status.HTTP_200_OK, updated.text
+        assert updated.json()["id"] == created.json()["id"]
+        assert updated.json()["duration"] == "00:30:00"
+
+    bad_id = requests.put(f"{BASE_URL}/tasks/by-client-id/not-a-uuid", json=body, timeout=TIMEOUT)
+    assert bad_id.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+
+@allure.epic("Component tests")
+@allure.feature("API")
+@allure.story("Web proxy")
+def test_record_api_through_web_address(cleanup):
+    web_api = f"{config.WebSettings().web_url}/api"
+
+    assert requests.get(f"{web_api}/ready", timeout=TIMEOUT).json() == {"status": "ready"}
+
+    created = requests.put(f"{web_api}/tasks/by-client-id/{uuid.uuid4()}", json={
+        "description": unique("proxied"),
+        "start_timestamp": str(datetime.now().replace(microsecond=0))}, timeout=TIMEOUT)
+    assert created.status_code == status.HTTP_201_CREATED, created.text
+    cleanup["tasks"].append(created.json()["id"])

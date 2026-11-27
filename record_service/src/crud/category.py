@@ -36,6 +36,13 @@ def require_active_category(db: Session, category_id: int | None) -> None:
         raise InvalidCategoryError(f'Category with id {category_id} does not exist or is archived.')
 
 
+def require_existing_category(db: Session, category_id: int | None) -> None:
+    ''' Queued tasks may keep a category that was archived while they waited. '''
+
+    if category_id is not None and db.get(models.Category, category_id) is None:
+        raise InvalidCategoryError(f'Category with id {category_id} does not exist.')
+
+
 def _commit_name(db: Session, category: models.Category) -> models.Category:
     try:
         db.commit()
