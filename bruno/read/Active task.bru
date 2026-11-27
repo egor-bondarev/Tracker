@@ -1,0 +1,19 @@
+meta {
+  name: Active task
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/tasks/active
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  The running task, or null.
+}

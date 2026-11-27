@@ -1,0 +1,42 @@
+meta {
+  name: Tasks in period
+  type: graphql
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/graphql
+  body: graphql
+  auth: none
+}
+
+body:graphql {
+  query TasksInPeriod($startDate: String!, $endDate: String!) {
+    tasksInPeriod(startDate: $startDate, endDate: $endDate) {
+      id
+      description
+      startTimestamp
+      finishTimestamp
+      duration
+      category { id name archived }
+    }
+  }
+}
+
+body:graphql:vars {
+  {
+    "startDate": "{{today}} 00:00:00",
+    "endDate": "{{today}} 23:59:59"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.errors: isUndefined
+  res.body.data.tasksInPeriod: isArray
+}
+
+docs {
+  Tasks started today that finished today or are still running.
+  Change startDate/endDate to look at another period.
+}

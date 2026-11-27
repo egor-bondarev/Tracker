@@ -1,0 +1,31 @@
+meta {
+  name: Recorded task is listed
+  type: graphql
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/graphql
+  body: graphql
+  auth: none
+}
+
+body:graphql {
+  query TasksInPeriod($startDate: String!, $endDate: String!) {
+    tasksInPeriod(startDate: $startDate, endDate: $endDate) { id description }
+  }
+}
+
+body:graphql:vars {
+  {
+    "startDate": "2000-01-01 00:00:00",
+    "endDate": "2100-01-01 00:00:00"
+  }
+}
+
+tests {
+  test("analytics lists the task recorded without start", () => {
+    const task = res.body.data.tasksInPeriod.find((t) => t.id === bru.getVar("recordedTaskId"));
+    expect(task.description).to.equal(`${bru.getVar("runTag")} without start`);
+  });
+}

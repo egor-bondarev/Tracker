@@ -131,6 +131,15 @@ query GetTasksInPeriod($startDate: String!, $endDate: String!) {
 Tasks started in the period are returned if they finished in it or are still
 running (`finishTimestamp` and `duration` are null for a running task).
 
+## Call the API from the terminal
+
+The [Bruno collection](bruno/README.md) holds every request (record API and
+GraphQL) with `local` and `acer` environments:
+
+```bash
+cd bruno && npm ci && npx bru run read --env acer
+```
+
 ## Run autotests
 
 - **Run application**: 

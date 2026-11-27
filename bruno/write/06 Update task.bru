@@ -1,0 +1,28 @@
+meta {
+  name: Update task
+  type: http
+  seq: 6
+}
+
+patch {
+  url: {{baseUrl}}/api/tasks/{{taskId}}
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "description": "{{runTag}} edited",
+    "category_id": null
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.description: eq {{runTag}} edited
+  res.body.category_id: isNull
+}
+
+docs {
+  Only the fields sent change; null clears the category.
+}

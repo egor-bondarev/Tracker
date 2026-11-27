@@ -1,0 +1,36 @@
+meta {
+  name: Start task
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/add-record/new/?is_task_finished=false
+  body: json
+  auth: none
+}
+
+params:query {
+  is_task_finished: false
+}
+
+body:json {
+  {
+    "description": "{{runTag}} started",
+    "timestamp": "{{now}}",
+    "category_id": {{categoryId}}
+  }
+}
+
+script:post-response {
+  bru.setVar("taskId", res.body.id);
+}
+
+assert {
+  res.status: eq 200
+  res.body.id: isNumber
+}
+
+docs {
+  The window's older API: start a task now. category_id is optional.
+}

@@ -1,0 +1,27 @@
+meta {
+  name: Rename and archive category
+  type: http
+  seq: 15
+}
+
+patch {
+  url: {{baseUrl}}/api/categories/{{categoryId}}
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "{{runTag}} archived",
+    "archived": true
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.archived: eq true
+}
+
+docs {
+  Categories are never deleted; archiving hides them from the window.
+}

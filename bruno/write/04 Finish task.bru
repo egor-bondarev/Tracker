@@ -1,0 +1,23 @@
+meta {
+  name: Finish task
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/add-record/finish/
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "id": {{taskId}},
+    "timestamp": "{{now}}"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.duration: isString
+}
