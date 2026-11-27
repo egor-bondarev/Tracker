@@ -1,0 +1,20 @@
+meta {
+  name: Categories
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/categories?include_archived=true
+  body: none
+  auth: none
+}
+
+params:query {
+  include_archived: true
+}
+
+assert {
+  res.status: eq 200
+  res.body: isArray
+}

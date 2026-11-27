@@ -1,0 +1,23 @@
+meta {
+  name: Categories (GraphQL)
+  type: graphql
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/graphql
+  body: graphql
+  auth: none
+}
+
+body:graphql {
+  {
+    categories(includeArchived: true) { id name archived }
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.errors: isUndefined
+  res.body.data.categories: isArray
+}

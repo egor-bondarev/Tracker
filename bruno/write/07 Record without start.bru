@@ -1,0 +1,36 @@
+meta {
+  name: Record without start
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/api/add-record/new/?is_task_finished=true
+  body: json
+  auth: none
+}
+
+params:query {
+  is_task_finished: true
+}
+
+body:json {
+  {
+    "description": "{{runTag}} without start",
+    "timestamp": "{{now}}"
+  }
+}
+
+script:post-response {
+  bru.setVar("recordedTaskId", res.body.id);
+}
+
+assert {
+  res.status: eq 200
+  res.body.id: isNumber
+}
+
+docs {
+  "Forgot to press start": the task starts where the latest finished task ended.
+  The response is the new task's id (not its duration).
+}

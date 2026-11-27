@@ -1,0 +1,15 @@
+meta {
+  name: Delete synced task
+  type: http
+  seq: 11
+}
+
+delete {
+  url: {{baseUrl}}/api/tasks/{{syncedTaskId}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 204
+}

@@ -1,0 +1,24 @@
+docs {
+  Tracker API through the web address: the record API under /api, analytics at /graphql.
+  The folder `read` only reads. The folder `write` creates, changes and deletes data:
+  run it against `local`, not against a server with real data.
+}
+
+script:pre-request {
+  // Server timestamps are naive local times: "YYYY-MM-DD HH:MM:SS".
+  const pad = (n) => String(n).padStart(2, "0");
+  const d = new Date();
+  bru.setVar("now", `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ` +
+    `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`);
+  bru.setVar("today", `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`);
+  if (!bru.getVar("runTag")) {
+    bru.setVar("runTag", `bruno-${Date.now()}`);
+  }
+  if (!bru.getVar("clientId")) {
+    // UUID v4 for the idempotent sync endpoint; the same id is reused within one run.
+    bru.setVar("clientId", "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+      const r = Math.floor(Math.random() * 16);
+      return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
+    }));
+  }
+}

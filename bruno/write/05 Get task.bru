@@ -1,0 +1,17 @@
+meta {
+  name: Get task
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/tasks/{{taskId}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.body.category_id: eq {{categoryId}}
+  res.body.finish_timestamp: isString
+}

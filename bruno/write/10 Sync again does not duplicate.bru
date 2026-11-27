@@ -1,0 +1,25 @@
+meta {
+  name: Sync again does not duplicate
+  type: http
+  seq: 10
+}
+
+put {
+  url: {{baseUrl}}/api/tasks/by-client-id/{{clientId}}
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "description": "{{runTag}} synced",
+    "category_id": null,
+    "start_timestamp": "{{today}} 00:00:00",
+    "finish_timestamp": "{{today}} 00:30:00"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.id: eq {{syncedTaskId}}
+}
