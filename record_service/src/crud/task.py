@@ -1,7 +1,6 @@
 ''' Database operations for user item. '''
 
 import uuid
-from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, not_
 from sqlalchemy.exc import NoResultFound, ArgumentError
@@ -30,10 +29,9 @@ def create_finished_task(db: Session, item: schemas.NewTask) -> models.Task:
     require_active_category(db, item.category_id)
     previous_task = db.query(models.Task).filter(not_(models.Task.finish_timestamp.is_(None)))\
         .order_by(desc(models.Task.finish_timestamp)).first()
-    if previous_task is None:
-        start_timestamp = datetime.now().replace(microsecond=0)
-    else:
-        start_timestamp = previous_task.finish_timestamp
+    # Without a previous task the client's own time is the start: the server clock may be in
+    # another time zone (containers run in UTC, clients send local time).
+    start_timestamp = item.timestamp if previous_task is None else previous_task.finish_timestamp
     _require_valid_range(start_timestamp, item.timestamp)
 
     db_item = models.Task(
