@@ -1,0 +1,8 @@
+# The build context is the repository root; only the service and tracker_db are sent.
+**
+!analytic_service/src/
+!tracker_db/
+**/__pycache__
+**/*.pyc
+**/.env
+**/*.db

@@ -18,7 +18,9 @@ services:
       start_period: 10s
 
   db_init:
-    build: ./record_service/src
+    build:
+      context: .
+      dockerfile: record_service/src/Dockerfile
     restart: "no"
     command: ["python", "create_db.py"]
     env_file: .env
@@ -31,7 +33,9 @@ services:
         condition: service_healthy
 
   record_service:
-    build: ./record_service/src
+    build:
+      context: .
+      dockerfile: record_service/src/Dockerfile
     restart: unless-stopped
     command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
     ports:
@@ -48,7 +52,9 @@ services:
         condition: service_completed_successfully
 
   analytic_service:
-    build: ./analytic_service/src
+    build:
+      context: .
+      dockerfile: analytic_service/src/Dockerfile
     restart: unless-stopped
     command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001"]
     ports:

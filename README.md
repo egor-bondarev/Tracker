@@ -131,8 +131,15 @@ Docker requires sudo, run `sudo docker compose up -d --build` directly.
 Startup order: PostgreSQL health check → one-shot `db_init` → both APIs.
 `db_init` exits with code 0 on success; it is not a continuously running service.
 Database connection attempts are bounded so a configuration error fails visibly.
-The initializer can be repeated without dropping existing tasks. It creates missing
-roles/databases/tables, but does **not** migrate schemas or rotate existing passwords.
+The initializer can be repeated without dropping existing tasks. It creates a missing
+role/database and applies Alembic migrations from `tracker_db/migrations`; it does
+**not** rotate existing passwords. Both services share the models in `tracker_db`, so a
+schema change needs a migration, e.g. from the repository root with `.env` pointing at a
+reachable database:
+
+```bash
+alembic -c tracker_db/alembic.ini revision --autogenerate -m "describe the change"
+```
 
 ```bash
 docker compose ps -a

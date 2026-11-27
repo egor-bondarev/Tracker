@@ -3,10 +3,11 @@ FROM python:3.11-slim-bookworm
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/app
 WORKDIR /app/src
-COPY requirements.txt .
+COPY record_service/src/requirements.txt .
 
 RUN pip install --no-cache-dir -r requirements.txt
-COPY . .
+COPY tracker_db /app/tracker_db
+COPY record_service/src/ .
 
 EXPOSE 80
 

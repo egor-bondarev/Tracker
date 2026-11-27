@@ -1,9 +1,10 @@
 """ Pydantic models for request validation and response formatting. """
 
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 from pydantic import BaseModel, field_validator
+from tracker_db.models import format_duration
 from src.resources.errors import EmptyDescriptionError, DescriptionIsTooLong, TimestampFieldError
 
 class TaskBase(BaseModel):
@@ -45,3 +46,7 @@ class TaskStartedResponse(BaseModel):
 
 class TaskFinishedResponse(BaseModel):
     duration: str
+
+    @field_validator('duration', mode='before')
+    def duration_as_text(v):
+        return format_duration(v) if isinstance(v, timedelta) else v

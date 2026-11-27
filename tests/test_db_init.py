@@ -1,12 +1,13 @@
 """Initialization failure handling without requiring a running database."""
 import importlib.util
 from pathlib import Path
+import sys
 import unittest
 from unittest.mock import MagicMock, patch
 
-spec = importlib.util.spec_from_file_location(
-    'db_init', Path(__file__).resolve().parents[1] / 'record_service/src/create_db.py'
-)
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))  # tracker_db, as PYTHONPATH=/app provides it in the image
+spec = importlib.util.spec_from_file_location('db_init', ROOT / 'record_service/src/create_db.py')
 module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)
 
@@ -50,15 +51,25 @@ class InitializationTests(unittest.TestCase):
             self.assertTrue(call.args[0].startswith('SELECT'))
         connection.close.assert_called_once()
 
-    def test_failed_schema_creation_closes_connection_and_propagates(self):
-        settings = MagicMock()
-        connection = settings.get_connection.return_value
-        cursor = connection.cursor.return_value.__enter__.return_value
-        cursor.execute.side_effect = RuntimeError('schema failed')
-        with self.assertRaisesRegex(RuntimeError, 'schema failed'):
-            module.create_tables(settings)
-        connection.close.assert_called_once()
+    @patch('alembic.command.upgrade')
+    def test_migrations_run_to_head_as_application_role(self, upgrade):
+        settings = self.settings()
+        with patch.object(module.psycopg2, 'connect') as connect:
+            module.run_migrations(settings)
+        connect.return_value.close.assert_called_once()
+        config, revision = upgrade.call_args.args
+        self.assertEqual(revision, 'head')
+        url = config.attributes['sqlalchemy.url']
+        self.assertEqual((url.username, url.password, url.host, url.database),
+                         ('tracker-user', "app'password", 'tracker_database', 'tracker'))
+        self.assertNotIn("app'password", repr(url))
+        self.assertTrue(Path(config.get_main_option('script_location'), 'env.py').is_file())
 
+    @patch('alembic.command.upgrade', side_effect=RuntimeError('migration failed'))
+    def test_failed_migration_propagates(self, upgrade):
+        with patch.object(module.psycopg2, 'connect'):
+            with self.assertRaisesRegex(RuntimeError, 'migration failed'):
+                module.run_migrations(self.settings())
 
 if __name__ == '__main__':
     unittest.main()

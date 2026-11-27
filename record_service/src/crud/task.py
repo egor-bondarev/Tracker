@@ -22,19 +22,15 @@ def create_finished_task(db: Session, item: schemas.NewTask) -> models.Task:
 
     previous_task = db.query(models.Task).filter(not_(models.Task.finish_timestamp.is_(None)))\
         .order_by(desc(models.Task.finish_timestamp)).first()
-    try:
-        if previous_task.finish_timestamp is None:
-            start_timestamp = datetime.now().replace(microsecond=0)
-        else:
-            start_timestamp = datetime.strptime(previous_task.finish_timestamp, "%Y-%m-%d %H:%M:%S")
-    except AttributeError:
+    if previous_task is None:
         start_timestamp = datetime.now().replace(microsecond=0)
+    else:
+        start_timestamp = previous_task.finish_timestamp
 
     db_item = models.Task(
         description=item.description,
         start_timestamp=start_timestamp,
-        finish_timestamp=item.timestamp,
-        duration=item.timestamp - start_timestamp)
+        finish_timestamp=item.timestamp)
 
     db.add(db_item)
     db.commit()
@@ -50,8 +46,6 @@ def finish_task(db: Session, item: schemas.FinishedTask) -> models.Task:
     if task:
         if not task.finish_timestamp:
             task.finish_timestamp = item.timestamp
-            task.duration = item.timestamp - \
-                datetime.strptime(task.start_timestamp, "%Y-%m-%d %H:%M:%S")
             db.commit()
             db.refresh(task)
             return task

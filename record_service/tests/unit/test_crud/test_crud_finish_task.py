@@ -22,7 +22,7 @@ def test_correct(create_started_record, remove_test_data):
     assert started_record.id == result.id
     assert started_record.description == result.description
     assert started_record.start_timestamp == result.start_timestamp
-    assert str(new_item.timestamp) == result.finish_timestamp
+    assert new_item.timestamp == result.finish_timestamp
 
 @allure.epic("Unit tests")
 @allure.feature("CRUD")
