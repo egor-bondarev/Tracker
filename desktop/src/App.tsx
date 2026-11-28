@@ -3,7 +3,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { ask, message, open } from '@tauri-apps/plugin-dialog';
 import { fetch as tauriFetch } from '@tauri-apps/plugin-http';
 import { openUrl } from '@tauri-apps/plugin-opener';
-import { OfflineError, TrackerApi } from './lib/api';
+import { AuthError, OfflineError, TrackerApi } from './lib/api';
 import { legacyToTasks, parseLegacyDay } from './lib/legacy';
 import {
   activeTask, addTasks, compact, pendingTasks, recordWithoutStart, startTask, stopTask,
@@ -11,7 +11,9 @@ import {
 import { loadSettings, loadState, readLegacyDir, saveSettings, saveState } from './lib/storage';
 import { syncPending } from './lib/sync';
 import { formatElapsed, fromStamp, toStamp } from './lib/time';
-import { DEFAULT_SETTINGS, EMPTY_STATE, type LocalState, type Settings } from './lib/types';
+import {
+  DEFAULT_SETTINGS, EMPTY_STATE, type Category, type LocalState, type Settings,
+} from './lib/types';
 import {
   BackIcon, ChartIcon, CloudCheckIcon, ExternalIcon, ImportIcon, MenuIcon, PlayIcon, RefreshIcon,
   SettingsIcon, StopIcon,
@@ -20,6 +22,7 @@ import {
 type View = 'main' | 'menu' | 'settings';
 const NEW_CATEGORY = 'new';
 const pluralTasks = (n: number) => `${n} ${n % 10 === 1 && n % 100 !== 11 ? 'запись' : 'записи'}`;
+const CHECK_TOKEN = 'Проверь токен в настройках';
 
 export default function App() {
   const [loaded, setLoaded] = useState(false);
@@ -33,6 +36,13 @@ export default function App() {
   const [newCategory, setNewCategory] = useState<string | null>(null);
   const [categoryError, setCategoryError] = useState('');
   const [now, setNow] = useState(() => Date.now());
+  // The server refused the token (or there is none): sending waits until it is fixed.
+  const [authFailed, setAuthFailedValue] = useState(false);
+  const authFailedRef = useRef(false);
+  const setAuthFailed = useCallback((value: boolean) => {
+    authFailedRef.current = value;
+    setAuthFailedValue(value);
+  }, []);
 
   // The window follows its content: compact for the timer, taller for settings and menu.
   const appRef = useRef<HTMLDivElement>(null);
@@ -64,7 +74,12 @@ export default function App() {
     };
   }, [loaded]);
 
-  const api = useMemo(() => new TrackerApi(settings.serverUrl, tauriFetch), [settings.serverUrl]);
+  const api = useMemo(
+    () => new TrackerApi(settings.serverUrl, tauriFetch, settings.token),
+    [settings.serverUrl, settings.token]);
+  // A sync already in flight picks up a changed address or token on its next round.
+  const apiRef = useRef(api);
+  apiRef.current = api;
 
   // Every change is written to disk in order before anything is sent to the server.
   const setState = useCallback((next: LocalState) => {
@@ -84,20 +99,33 @@ export default function App() {
     try {
       do {
         syncAgain.current = false;
-        const result = await syncPending(api, () => stateRef.current, setState, retryRejected);
-        if (!result.offline) {
-          const categories = await api.categories().catch(() => null);
-          setState(compact({
-            ...stateRef.current,
-            lastSyncAt: toStamp(new Date()),
-            categories: categories ?? stateRef.current.categories,
-          }));
+        const current = apiRef.current;
+        const result = await syncPending(current, () => stateRef.current, setState, retryRejected);
+        if (result.unauthorized) {
+          setAuthFailed(true);
+          continue;
         }
+        if (result.offline) continue;
+        let categories: Category[] | null = null;
+        try {
+          categories = await current.categories();
+        } catch (error) {
+          if (error instanceof AuthError) {
+            setAuthFailed(true);
+            continue;
+          }
+        }
+        setAuthFailed(false);
+        setState(compact({
+          ...stateRef.current,
+          lastSyncAt: toStamp(new Date()),
+          categories: categories ?? stateRef.current.categories,
+        }));
       } while (syncAgain.current);
     } finally {
       syncing.current = false;
     }
-  }, [api, setState]);
+  }, [setState, setAuthFailed]);
 
   useEffect(() => {
     void (async () => {
@@ -110,7 +138,7 @@ export default function App() {
         setDescription(running.description);
         setCategoryId(running.categoryId);
       }
-      if (!savedSettings.serverUrl) setView('settings');
+      if (!savedSettings.serverUrl || !savedSettings.token) setView('settings');
       setLoaded(true);
     })();
   }, []);
@@ -150,6 +178,9 @@ export default function App() {
   }, [running]);
 
   const pending = pendingTasks(state).length;
+  const needsToken = authFailed || !settings.token;
+  const unsent = pending > 0 ? `${pluralTasks(pending)} не отправлено` : '';
+  const dotTitle = needsToken ? [unsent, CHECK_TOKEN].filter(Boolean).join('. ') : unsent;
   const input = { description: description.trim(), categoryId };
   const canStart = !running && input.description.length > 0;
 
@@ -184,8 +215,9 @@ export default function App() {
       setNewCategory(null);
       setCategoryError('');
     } catch (error) {
-      setCategoryError(error instanceof OfflineError
-        ? 'Нет связи с сервером' : 'Не удалось создать категорию');
+      if (error instanceof AuthError) setAuthFailed(true);
+      setCategoryError(error instanceof AuthError ? CHECK_TOKEN
+        : error instanceof OfflineError ? 'Нет связи с сервером' : 'Не удалось создать категорию');
     }
   }
 
@@ -218,11 +250,14 @@ export default function App() {
       await runSync(true);
       const left = pendingTasks(stateRef.current).length;
       await message(left
-        ? `Часть записей не отправлена (${left}). Они остались в очереди.`
+        ? `Часть записей не отправлена (${left}). Они остались в очереди.` +
+          (authFailedRef.current ? ` ${CHECK_TOKEN}.` : '')
         : 'Старые записи отправлены.', { title: 'Импорт' });
     } catch (error) {
-      await message(error instanceof OfflineError
-        ? 'Для импорта нужна связь с сервером.' : `Импорт не удался: ${String(error)}`,
+      if (error instanceof AuthError) setAuthFailed(true);
+      await message(error instanceof AuthError ? `Импорт не удался. ${CHECK_TOKEN}.`
+        : error instanceof OfflineError ? 'Для импорта нужна связь с сервером.'
+          : `Импорт не удался: ${String(error)}`,
       { title: 'Импорт', kind: 'error' });
     }
   }
@@ -239,6 +274,7 @@ export default function App() {
           onBack={settings.serverUrl ? () => setView('main') : undefined}
           onSave={async (next) => {
             await saveSettings(next);
+            setAuthFailed(false);
             setSettings(next);
             setView('main');
           }} />
@@ -250,9 +286,8 @@ export default function App() {
     <div className="app" ref={appRef}>
       <div className="bar">
         <span className={running ? 'time running' : 'time'}>{elapsed}</span>
-        {pending > 0
-          ? <span className="dot" title={`${pluralTasks(pending)} не отправлено`}
-              aria-label={`${pluralTasks(pending)} не отправлено`} />
+        {pending > 0 || needsToken
+          ? <span className="dot" title={dotTitle} aria-label={dotTitle} />
           : <span className="ok-icon" title="Всё отправлено" aria-label="Всё отправлено">
               <CloudCheckIcon />
             </span>}
@@ -277,7 +312,8 @@ export default function App() {
               <ChartIcon /><span className="grow">Открыть аналитику</span><ExternalIcon />
             </button>
             <button role="menuitem" onClick={() => setView('settings')}>
-              <SettingsIcon />Настройки
+              <SettingsIcon /><span className="grow">Настройки</span>
+              {needsToken && <span className="count">Проверь токен</span>}
             </button>
           </div>
         )}
@@ -340,15 +376,27 @@ function SettingsView({ settings, lastSyncAt, onSave, onBack }: {
   onBack?: () => void;
 }) {
   const [serverUrl, setServerUrl] = useState(settings.serverUrl);
+  const [token, setToken] = useState(settings.token);
+  const [showToken, setShowToken] = useState(false);
   const [interval, setIntervalMinutes] = useState(settings.syncIntervalMinutes);
-  const [check, setCheck] = useState<'idle' | 'ok' | 'fail' | 'checking'>('idle');
+  const [check, setCheck] = useState<'idle' | 'ok' | 'fail' | 'auth' | 'checking'>('idle');
   const valid = /^https?:\/\/\S+$/.test(serverUrl.trim());
 
+  // Reachability first (no token needed), then an authenticated call to check the token.
   async function onCheck() {
     if (!valid) return;
     setCheck('checking');
-    const ok = await new TrackerApi(serverUrl, tauriFetch).ready().catch(() => false);
-    setCheck(ok ? 'ok' : 'fail');
+    const api = new TrackerApi(serverUrl, tauriFetch, token);
+    if (!await api.ready().catch(() => false)) {
+      setCheck('fail');
+      return;
+    }
+    try {
+      await api.activeTask();
+      setCheck('ok');
+    } catch (error) {
+      setCheck(error instanceof AuthError ? 'auth' : 'fail');
+    }
   }
 
   return (
@@ -362,7 +410,9 @@ function SettingsView({ settings, lastSyncAt, onSave, onBack }: {
         <span className="grow" />
         <button disabled={!valid} onClick={() => void onCheck()}>Проверить</button>
         <button disabled={!valid}
-          onClick={() => void onSave({ serverUrl: serverUrl.trim(), syncIntervalMinutes: interval })}>
+          onClick={() => void onSave({
+            serverUrl: serverUrl.trim(), token: token.trim(), syncIntervalMinutes: interval,
+          })}>
           Сохранить
         </button>
       </div>
@@ -371,8 +421,20 @@ function SettingsView({ settings, lastSyncAt, onSave, onBack }: {
         <input value={serverUrl} placeholder="http://192.168.0.38:8080" autoFocus
           onChange={(e) => { setServerUrl(e.target.value); setCheck('idle'); }} />
         {serverUrl && !valid && <p className="hint error">Адрес начинается с http:// или https://</p>}
+        <p className="label">Токен</p>
+        <div className="row">
+          <input type={showToken ? 'text' : 'password'} value={token} autoComplete="off"
+            spellCheck={false} placeholder="Выдаёт администратор сервера"
+            onChange={(e) => { setToken(e.target.value); setCheck('idle'); }} />
+          <button onClick={() => setShowToken(!showToken)}>
+            {showToken ? 'Скрыть' : 'Показать'}
+          </button>
+        </div>
         {check === 'ok' && <p className="hint ok">Сервер отвечает</p>}
         {check === 'fail' && <p className="hint error">Сервер не отвечает</p>}
+        {check === 'auth' && (
+          <p className="hint error">{token.trim() ? 'Неверный токен' : 'Токен не указан'}</p>
+        )}
         {check === 'checking' && <p className="hint">Проверяю…</p>}
         <p className="label">Повтор неотправленных записей</p>
         <select value={interval} onChange={(e) => setIntervalMinutes(Number(e.target.value))}>

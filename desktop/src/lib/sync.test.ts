@@ -20,7 +20,7 @@ function server(answer: (url: string, body: unknown) => Response | Error) {
     if (result instanceof Error) throw result;
     return result;
   };
-  return { api: new TrackerApi('http://host:8080/', fetchImpl), calls };
+  return { api: new TrackerApi('http://host:8080/', fetchImpl, 'secret'), calls };
 }
 
 const ok = () => new Response(JSON.stringify({ id: 1 }), { status: 200 });
@@ -34,7 +34,7 @@ describe('syncPending', () => {
 
     const result = await syncPending(api, s.get, s.set);
 
-    expect(result).toEqual({ sent: 2, rejected: 0, offline: false });
+    expect(result).toEqual({ sent: 2, rejected: 0, offline: false, unauthorized: false });
     expect(calls.map((c) => c.url)).toEqual([
       'http://host:8080/api/tasks/by-client-id/a', 'http://host:8080/api/tasks/by-client-id/b']);
     expect(calls[0].body).toEqual({
@@ -63,7 +63,8 @@ describe('syncPending', () => {
     const { api } = server((url) => url.endsWith('/a')
       ? new Response('{"detail":"bad"}', { status: 422 }) : ok());
 
-    expect(await syncPending(api, s.get, s.set)).toEqual({ sent: 1, rejected: 1, offline: false });
+    expect(await syncPending(api, s.get, s.set))
+      .toEqual({ sent: 1, rejected: 1, offline: false, unauthorized: false });
     expect(s.get().tasks.find((t) => t.clientId === 'a')?.rejected).toContain('bad');
 
     const again = server(() => new Response('', { status: 503 }));
@@ -86,7 +87,35 @@ describe('syncPending', () => {
 
   it('reports a missing server address as offline', async () => {
     const s = store(recordWithoutStart(EMPTY_STATE, input, '2026-11-27 10:00:00', 'a'));
-    const api = new TrackerApi('', async () => ok());
+    const api = new TrackerApi('', async () => ok(), 'secret');
     expect((await syncPending(api, s.get, s.set)).offline).toBe(true);
+  });
+
+  it.each([401, 403])('stops on HTTP %i and keeps tasks pending and unflagged', async (status) => {
+    let state = recordWithoutStart(EMPTY_STATE, input, '2026-11-27 09:00:00', 'a');
+    state = recordWithoutStart(state, input, '2026-11-27 10:00:00', 'b');
+    const s = store(state);
+    const { api, calls } = server(() =>
+      new Response('{"detail":"Invalid token"}', { status }));
+
+    for (const retryRejected of [false, true]) {
+      expect(await syncPending(api, s.get, s.set, retryRejected))
+        .toEqual({ sent: 0, rejected: 0, offline: false, unauthorized: true });
+    }
+
+    expect(calls).toHaveLength(2);
+    expect(s.get().tasks).toHaveLength(2);
+    expect(s.get().tasks.every((t) => !t.synced && t.rejected === undefined)).toBe(true);
+  });
+
+  it('stops without a request when the token is not set', async () => {
+    const s = store(recordWithoutStart(EMPTY_STATE, input, '2026-11-27 10:00:00', 'a'));
+    const calls: string[] = [];
+    const api = new TrackerApi('http://host:8080', async (url) => { calls.push(url); return ok(); });
+
+    expect((await syncPending(api, s.get, s.set)).unauthorized).toBe(true);
+    expect(calls).toEqual([]);
+    expect(s.get().tasks[0]).toMatchObject({ synced: false });
+    expect(s.get().tasks[0].rejected).toBeUndefined();
   });
 });

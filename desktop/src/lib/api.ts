@@ -8,6 +8,12 @@ export class OfflineError extends Error {}
 /** Raised when the server answered with 4xx: resending the same data will not help. */
 export class RejectedError extends Error {}
 
+/**
+ * Raised when the token is missing or the server refused it (HTTP 401/403). The data is
+ * fine, so callers keep it queued until the token is fixed.
+ */
+export class AuthError extends Error {}
+
 export interface ServerTask {
   id: number;
   client_id: string | null;
@@ -17,11 +23,15 @@ export interface ServerTask {
   finish_timestamp: string | null;
 }
 
-/** Talks to the record API through the web address (nginx proxies it under /api). */
+/**
+ * Talks to the record API through the web address (nginx proxies it under /api). Every
+ * call except `ready()` sends the user's token as `Authorization: Bearer <token>`.
+ */
 export class TrackerApi {
   constructor(
     private readonly serverUrl: string,
     private readonly fetchImpl: Fetch,
+    private readonly token = '',
     private readonly timeoutMs = 4000,
   ) {}
 
@@ -33,21 +43,30 @@ export class TrackerApi {
     return this.serverUrl.trim().replace(/\/+$/, '');
   }
 
-  private async call<T>(path: string, init: RequestInit = {}): Promise<T> {
+  private async call<T>(path: string, init: RequestInit = {}, auth = true): Promise<T> {
     if (!this.base()) throw new OfflineError('Server address is not set');
+    const token = this.token.trim();
+    if (auth && !token) throw new AuthError('Token is not set');
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.timeoutMs);
     let response: Response;
     try {
       response = await this.fetchImpl(`${this.base()}/api${path}`, {
         ...init,
-        headers: { 'Content-Type': 'application/json', ...(init.headers ?? {}) },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(auth ? { Authorization: `Bearer ${token}` } : {}),
+          ...(init.headers ?? {}),
+        },
         signal: controller.signal,
       });
     } catch (error) {
       throw new OfflineError(String(error));
     } finally {
       clearTimeout(timer);
+    }
+    if (response.status === 401 || response.status === 403) {
+      throw new AuthError(await response.text());
     }
     if (response.status >= 400 && response.status < 500) {
       throw new RejectedError(await response.text());
@@ -57,7 +76,7 @@ export class TrackerApi {
   }
 
   async ready(): Promise<boolean> {
-    const body = await this.call<{ status: string }>('/ready');
+    const body = await this.call<{ status: string }>('/ready', {}, false);
     return body?.status === 'ready';
   }
 
