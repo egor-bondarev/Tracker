@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!-- Merged into the app's Info.plist by Tauri. macOS shows this text when it asks for
+       Local Network access, which the window needs to reach a server such as 192.168.0.38. -->
+  <key>NSLocalNetworkUsageDescription</key>
+  <string>Tracker отправляет записи о задачах на сервер в вашей домашней сети.</string>
+</dict>
+</plist>

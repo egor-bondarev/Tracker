@@ -53,6 +53,11 @@ the first launch asks for confirmation:
   Open Anyway*. Without that signature macOS reports the downloaded app as "damaged".
 - **Windows**: SmartScreen shows *More info → Run anyway*.
 
+On macOS the window also needs **Local Network** access to reach a server in the home
+network: allow it when asked, or later in *System Settings → Privacy & Security →
+Local Network*. Without it the settings check reports "Сервер не отвечает" although
+the same address opens in a browser.
+
 Keep one copy of the app per Mac: a local `tauri build` leaves another `Tracker.app`
 with the same bundle id in `src-tauri/target/release/bundle/`, and macOS may launch that
 one instead of the installed app.
