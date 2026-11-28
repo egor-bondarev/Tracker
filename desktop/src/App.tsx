@@ -10,7 +10,7 @@ import {
 } from './lib/queue';
 import { loadSettings, loadState, readLegacyDir, saveSettings, saveState } from './lib/storage';
 import { syncPending } from './lib/sync';
-import { formatElapsed, fromStamp, toStamp } from './lib/time';
+import { formatElapsed, fromStamp, stampFromServer, toStamp } from './lib/time';
 import {
   DEFAULT_SETTINGS, EMPTY_STATE, type Category, type LocalState, type Settings,
 } from './lib/types';
@@ -153,7 +153,8 @@ export default function App() {
         if (remote?.client_id && remote.start_timestamp && !activeTask(stateRef.current)) {
           setState(addTasks(stateRef.current, [{
             clientId: remote.client_id, description: remote.description,
-            categoryId: remote.category_id, start: remote.start_timestamp, finish: null,
+            categoryId: remote.category_id, start: stampFromServer(remote.start_timestamp),
+            finish: null,
             synced: true,
           }]));
           setDescription(remote.description);
