@@ -1,5 +1,10 @@
+headers {
+  Authorization: Bearer {{process.env.TRACKER_TOKEN}}
+}
+
 docs {
   Tracker API through the web address: the record API under /api, analytics at /graphql.
+  The record API needs a user token: put TRACKER_TOKEN=... in bruno/.env (not committed).
   The folder `read` only reads. The folder `write` creates, changes and deletes data:
   run it against `local`, not against a server with real data.
 }

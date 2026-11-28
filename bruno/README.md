@@ -8,12 +8,26 @@ pinned Bruno CLI.
 | Folder  | What it does | Where to run it |
 |---------|--------------|-----------------|
 | `read`  | Readiness, running task, categories, GraphQL tasks of today and categories | Any server |
-| `write` | Create a category → start → finish → read → edit a task → record without start → sync by client id twice (no duplicate) → delete the tasks → rename and archive the category | Local stack only |
+| `write` | Create a category → start → finish → read → edit a task → record without start → sync by client id twice (no duplicate) → delete the tasks → rename and archive the category → put a task in it → deleting it is refused (409) → delete it with `detach_tasks=true` → the task stays without a category → delete the task | Local stack only |
 
-`write` leaves no tasks behind, but categories cannot be deleted through the API:
-each run leaves one archived `bruno-<time>` category.
+`write` leaves nothing behind.
 
 Environments: `local` (`http://127.0.0.1:8080`) and `acer` (`http://192.168.0.38:8080`).
+
+## Token
+
+The record API acts for one user, identified by a token. Create a user (or a new
+token for an existing one) with the admin command in the record service container,
+then put the token into `bruno/.env`, which is not committed:
+
+```bash
+docker compose exec record_service python -m tracker_db.users add bruno
+cp bruno/.env.example bruno/.env   # then set TRACKER_TOKEN=<printed token>
+```
+
+Every request sends it as `Authorization: Bearer {{process.env.TRACKER_TOKEN}}`
+(set in `collection.bru`). Analytics (`/graphql`) and `/api/ready` need no token.
+Use a separate user for the collection on Acer, not a real person's token.
 
 ## Terminal
 

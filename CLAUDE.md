@@ -10,7 +10,7 @@ Tracker API calls (record API under `/api`, analytics at `/graphql`).
   hand-written URLs:
 
   ```bash
-  cd bruno && npm ci
+  cd bruno && npm ci   # once; the token of a Tracker user goes into bruno/.env (TRACKER_TOKEN)
   npx bru run read --env acer
   npx bru run "read/Tasks in period.bru" --env local
   ```

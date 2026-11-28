@@ -30,4 +30,5 @@ def http_exception_handler(request: Request, exc: HTTPException):
     return JSONResponse(
         status_code=exc.status_code,
         content={"detail": f"{exc.detail}"},
+        headers=getattr(exc, "headers", None),
     )

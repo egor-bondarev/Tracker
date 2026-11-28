@@ -4,7 +4,7 @@ import allure
 
 from fastapi import HTTPException, status
 from pydantic import ValidationError
-from tests.helpers import db_helper, generators, asserts
+from tests.helpers import db_helper, generators, asserts, users
 from src.api import task
 from src.schemas import schemas
 
@@ -15,7 +15,7 @@ def test_all_is_correct(create_started_record):
 
     db_session, started_task = create_started_record
     finish_task = schemas.FinishedTask(id=started_task.id, timestamp=generators.timestamp_now())
-    result = task.post_finish_task(finish_task, db_session)
+    result = task.post_finish_task(finish_task, db_session, user=users.test_user())
 
     assert started_task == result, 'Records are not equal.'
 
@@ -73,7 +73,7 @@ def test_not_existed_id_field(db_session_local):
     finish_task = schemas.FinishedTask(id=new_task.id, timestamp=generators.timestamp_now())
 
     with pytest.raises(HTTPException) as exc:
-        task.post_finish_task(finish_task, db_session_local)
+        task.post_finish_task(finish_task, db_session_local, user=users.test_user())
 
     assert exc.type == HTTPException
     assert exc.value.status_code == status.HTTP_404_NOT_FOUND
@@ -88,7 +88,7 @@ def test_already_finished_task_id_field(db_session_local):
     finish_task = schemas.FinishedTask(id=new_task.id, timestamp=generators.timestamp_now())
 
     with pytest.raises(HTTPException) as exc:
-        task.post_finish_task(finish_task, db_session_local)
+        task.post_finish_task(finish_task, db_session_local, user=users.test_user())
 
     db_helper.remove_record(db_session_local, new_task.id)
 

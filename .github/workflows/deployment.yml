@@ -33,6 +33,11 @@ jobs:
           python -m unittest discover -s tests -v
       - name: Build and start
         run: docker compose up -d --build
+      - name: Create a user for the smoke test
+        run: |
+          token=$(docker compose exec -T record_service python -m tracker_db.users add ci-smoke)
+          echo "::add-mask::$token"
+          echo "SMOKE_TOKEN=$token" >> "$GITHUB_ENV"
       - name: Require Record Service tests for a release
         if: inputs.source_sha != ''
         run: |

@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 import pytest
 import allure
 
-from tests.helpers import generators, db_helper
+from tests.helpers import generators, db_helper, users
 from src.crud import task
 from src.schemas import schemas
 
@@ -17,7 +17,7 @@ def test_description_repeated_value(db_session_local, remove_test_data):
     new_item = schemas.NewTask(
         description=existed_task.description,
         timestamp=generators.timestamp_now())
-    result = task.create_finished_task(db=db_session_local, item=new_item)
+    result = task.create_finished_task(db=db_session_local, item=new_item, user_id=users.TEST_USER_ID)
 
     remove_test_data["action"] = 'teardown'
     remove_test_data["id"] = [result.id, existed_task.id]
@@ -35,7 +35,7 @@ def test_correct(db_session_local,remove_test_data):
     new_item = schemas.NewTask(
         description=generators.custom_string(),
         timestamp=generators.timestamp_now())
-    result = task.create_finished_task(db=db_session_local, item=new_item)
+    result = task.create_finished_task(db=db_session_local, item=new_item, user_id=users.TEST_USER_ID)
 
     remove_test_data["action"] = 'teardown'
     remove_test_data["id"] = [result.id]
@@ -52,7 +52,7 @@ def test_correct(db_session_local,remove_test_data):
 def test_symbols_in_description_field(db_session_local, remove_test_data, description_value):
 
     new_item = schemas.NewTask(description=description_value, timestamp=generators.timestamp_now())
-    result = task.create_finished_task(db=db_session_local, item=new_item)
+    result = task.create_finished_task(db=db_session_local, item=new_item, user_id=users.TEST_USER_ID)
 
     remove_test_data["action"] = 'teardown'
     remove_test_data["id"] = [result.id]
@@ -66,11 +66,11 @@ def test_symbols_in_description_field(db_session_local, remove_test_data, descri
 def test_first_task_starts_at_the_client_time():
     # No finished task yet: the start must not come from the server clock (UTC in a container).
     db = MagicMock()
-    db.query.return_value.filter.return_value.order_by.return_value.first.return_value = None
+    db.query.return_value.filter.return_value.filter.return_value.order_by.return_value.first.return_value = None
     timestamp = generators.timestamp_now() - timedelta(hours=5)
     new_item = schemas.NewTask(description=generators.custom_string(), timestamp=timestamp)
 
-    result = task.create_finished_task(db=db, item=new_item)
+    result = task.create_finished_task(db=db, item=new_item, user_id=users.TEST_USER_ID)
 
     assert result.start_timestamp == timestamp
     assert result.finish_timestamp == timestamp

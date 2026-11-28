@@ -3,7 +3,7 @@ import pytest
 import allure
 
 from pydantic import ValidationError
-from tests.helpers import generators, db_helper, asserts
+from tests.helpers import generators, db_helper, asserts, users
 from src.crud import task
 from src.resources.errors import EmptyDescriptionError, DescriptionIsTooLong, TimestampFieldError
 from src.schemas import schemas
@@ -79,7 +79,7 @@ def test_description_repeated_value(db_session_local, remove_test_data):
     new_item = schemas.NewTask(
         description=existed_task.description,
         timestamp=generators.timestamp_now())
-    new_task = task.create_task(db=db_session_local, item=new_item)
+    new_task = task.create_task(db=db_session_local, item=new_item, user_id=users.TEST_USER_ID)
 
     remove_test_data["action"] = 'teardown'
     remove_test_data["id"] = [new_task.id, existed_task.id]
@@ -95,7 +95,7 @@ def test_correct(db_session_local, remove_test_data):
     new_item = schemas.NewTask(
         description=generators.custom_string(),
         timestamp=generators.timestamp_now())
-    result = task.create_task(db=db_session_local, item=new_item)
+    result = task.create_task(db=db_session_local, item=new_item, user_id=users.TEST_USER_ID)
 
     remove_test_data["action"] = 'teardown'
     remove_test_data["id"] = [result.id]
@@ -113,7 +113,7 @@ def test_correct(db_session_local, remove_test_data):
 def test_symbols_in_description_field(db_session_local, remove_test_data, description_value):
 
     new_item = schemas.NewTask(description=description_value, timestamp=generators.timestamp_now())
-    result = task.create_task(db=db_session_local, item=new_item)
+    result = task.create_task(db=db_session_local, item=new_item, user_id=users.TEST_USER_ID)
 
     remove_test_data["action"] = 'teardown'
     remove_test_data["id"] = [result.id]

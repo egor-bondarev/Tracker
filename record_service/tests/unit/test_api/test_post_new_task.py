@@ -5,7 +5,7 @@ import allure
 from pydantic import ValidationError
 from fastapi import HTTPException
 
-from tests.helpers import db_helper, generators, asserts
+from tests.helpers import db_helper, generators, asserts, users
 from src.api import task
 from src.schemas import schemas
 from src.resources.errors import EmptyDescriptionError, DescriptionIsTooLong, TimestampFieldError
@@ -38,7 +38,7 @@ def test_missing_is_task_finished_field(db_session_local):
     with pytest.raises(HTTPException) as exc:
         new_task = schemas.NewTask(
             timestamp=generators.timestamp_now(), description=str(uuid.uuid4()))
-        task.post_new_task(new_task, db_session_local)
+        task.post_new_task(new_task, db_session_local, user=users.test_user())
 
     asserts.exception_missing_field(exc, 'is_task_finished')
 
@@ -96,7 +96,7 @@ def test_wrong_type_is_task_finished_field(db_session_local):
     with pytest.raises(HTTPException) as exc:
         new_task = schemas.NewTask(
             timestamp=generators.timestamp_now(), description=str(uuid.uuid4()))
-        task.post_new_task(new_task, generators.number(), db_session_local)
+        task.post_new_task(new_task, generators.number(), db_session_local, user=users.test_user())
 
     asserts.exception_missing_field(exc, 'is_task_finished')
 
@@ -112,7 +112,7 @@ def test_description_field(db_session_local, is_task_finished, description_value
     new_task = schemas.NewTask(
         timestamp=generators.timestamp_now(),
         description=description_value)
-    result = task.post_new_task(new_task, is_task_finished, db_session_local)
+    result = task.post_new_task(new_task, is_task_finished, db_session_local, user=users.test_user())
 
     remove_test_data["action"] = 'teardown'
     remove_test_data["id"] = [result.id]
@@ -148,7 +148,7 @@ def test_all_is_correct(db_session_local, remove_test_data):
     new_task = schemas.NewTask(
         description=description,
         timestamp=start_timestamp)
-    result = task.post_new_task(new_task, False, db_session_local)
+    result = task.post_new_task(new_task, False, db_session_local, user=users.test_user())
 
     remove_test_data["action"] = 'teardown'
     remove_test_data["id"] = [result.id]
@@ -168,7 +168,7 @@ def test_description_repeated_value(db_session_local, remove_test_data):
     new_task = schemas.NewTask(
         description=existed_record.description,
         timestamp=start_timestamp)
-    result = task.post_new_task(new_task, False, db_session_local)
+    result = task.post_new_task(new_task, False, db_session_local, user=users.test_user())
 
     remove_test_data["action"] = 'teardown'
     remove_test_data["id"] = [result.id, existed_record.id]

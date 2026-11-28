@@ -3,7 +3,7 @@
 import uuid
 from datetime import datetime, timedelta
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Uuid, false
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, UniqueConstraint, Uuid, false, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -11,11 +11,26 @@ class Base(DeclarativeBase):
     """Declarative base whose metadata Alembic compares against."""
 
 
-class Category(Base):
-    __tablename__ = 'categories'
+class User(Base):
+    """A person using Tracker. Clients authenticate with a token; only its hash is stored."""
+    __tablename__ = 'users'
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
+    token_hash: Mapped[str | None] = mapped_column(String(64), unique=True, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, server_default=func.now())
+
+
+class Category(Base):
+    __tablename__ = 'categories'
+    # Names are unique per user; two users may both have "Работа".
+    __table_args__ = (UniqueConstraint('user_id', 'name', name='uq_categories_user_id_name'),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey('users.id', ondelete='RESTRICT'), nullable=False, index=True)
+    name: Mapped[str] = mapped_column(String(50), nullable=False)
     archived: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False, server_default=false())
 
@@ -24,6 +39,8 @@ class Task(Base):
     __tablename__ = 'tasks'
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey('users.id', ondelete='RESTRICT'), nullable=False, index=True)
     description: Mapped[str] = mapped_column(String, nullable=False)
     start_timestamp: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, index=True)
     finish_timestamp: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)

@@ -1,0 +1,15 @@
+meta {
+  name: Delete categorized task
+  type: http
+  seq: 20
+}
+
+delete {
+  url: {{baseUrl}}/api/tasks/{{categorizedTaskId}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 204
+}
