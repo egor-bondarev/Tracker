@@ -2,12 +2,14 @@
 
 ## Calling the API: use the Bruno collection
 
-The Bruno collection in [bruno/](bruno/README.md) is the single place for manual
-Tracker API calls (record API under `/api`, analytics at `/graphql`).
+The Bruno collection in [bruno/](bruno/README.md) is the only way to call the
+Tracker API by hand (record API under `/api` or ports 8000/8001, analytics at
+`/graphql`, including `/ready` and `/openapi.json`).
 
-- **Use it instead of direct URL calls.** For manual or exploratory requests run the
-  collection, not `curl`, `httpie`, Python `requests`/`urllib` or `fetch` with
-  hand-written URLs:
+- **Direct API calls are forbidden.** Do not send requests to a Tracker server with
+  `curl`, `wget`, `httpie`, Python `requests`/`urllib`, `fetch`, a browser or
+  DevTools, or with ad-hoc scripts and temporary tests written for the occasion,
+  against any environment (local, Acer, CI). Use the collection:
 
   ```bash
   cd bruno && npm ci   # once; the token of a Tracker user goes into bruno/.env (TRACKER_TOKEN)
@@ -28,5 +30,12 @@ Tracker API calls (record API under `/api`, analytics at `/graphql`).
 - **Verify after changing the API or the collection**, against the local stack:
   `npx bru run read --env local` and `npx bru run write --env local`.
 
-Automated tests and code (`record_service/tests`, `tests/`, `scripts/`, `desktop/`)
-keep their own HTTP clients; this rule is about calls made by hand or by an agent.
+Allowed without Bruno:
+
+- **Database access** (`psql` in the PostgreSQL container, `docker compose exec`,
+  Alembic, the `python -m tracker_db.users` admin command).
+- **The project's committed tools and test suites**, run as they are: the
+  `record_service` tests, `tests/` (including `deployment_smoke.py`),
+  `scripts/check_tracker.py`, the desktop app and its tests, CI workflows.
+  Their HTTP clients are part of the code; this rule covers calls made by hand or
+  by an agent.
