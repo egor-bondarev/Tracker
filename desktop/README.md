@@ -44,6 +44,20 @@ npx tauri dev         # run the window against a running server
 npx tauri build       # installers in src-tauri/target/release/bundle/
 ```
 
-CI (`.github/workflows/desktop.yml`) builds unsigned Windows (`.exe`, `.msi`) and macOS
-(`.dmg`) installers as workflow artifacts. Unsigned builds trigger a SmartScreen /
-Gatekeeper warning on first launch.
+CI (`.github/workflows/desktop.yml`) builds Windows (`.exe`, `.msi`) and macOS (`.dmg`)
+installers as workflow artifacts. Neither is signed with a paid developer identity, so
+the first launch asks for confirmation:
+
+- **macOS**: the app is signed ad hoc (`bundle.macOS.signingIdentity: "-"`). macOS says
+  it cannot verify the developer; allow it in *System Settings → Privacy & Security →
+  Open Anyway*. Without that signature macOS reports the downloaded app as "damaged".
+- **Windows**: SmartScreen shows *More info → Run anyway*.
+
+On macOS the window also needs **Local Network** access to reach a server in the home
+network: allow it when asked, or later in *System Settings → Privacy & Security →
+Local Network*. Without it the settings check reports "Сервер не отвечает" although
+the same address opens in a browser.
+
+Keep one copy of the app per Mac: a local `tauri build` leaves another `Tracker.app`
+with the same bundle id in `src-tauri/target/release/bundle/`, and macOS may launch that
+one instead of the installed app.
