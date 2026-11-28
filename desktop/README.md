@@ -13,15 +13,25 @@ PyQt window (`desktop_gui/`, see git history).
   Sync is retried on start, after each action, on the interval from the settings
   (hourly by default) and from the menu (*Синхронизировать*, which also retries
   records the server rejected).
-- **Settings** (server address, sync interval) live in `settings.json`. Both files are
+- **Settings** (server address, token, sync interval) live in `settings.json`. Both files are
   in the app data directory: `%APPDATA%\io.github.egorbondarev.tracker\` on Windows,
   `~/Library/Application Support/io.github.egorbondarev.tracker/` on macOS.
 - **One address**: the server address is the web UI, e.g. `http://192.168.0.38:8080`.
   nginx proxies the record API under `/api`; *Открыть аналитику* opens the address.
+- **Token**: every record API call except `/api/ready` sends
+  `Authorization: Bearer <token>`, and each user sees only their own tasks and
+  categories. The token is issued by the server admin command, one per user, and is
+  entered once in *Настройки* (stored in plain text in `settings.json`).
+  *Проверить* checks the address (`/api/ready`) and then the token
+  (`/api/tasks/active`). Without a token the window opens on the settings screen. If
+  the server answers 401/403, sending stops and the queued records stay in
+  `tasks.json` untouched (not flagged as rejected); the red dot and the menu say
+  *Проверь токен*, and the next sync after the token is fixed sends them.
 - **Import from the old version**: pick the folder with the old `YYYY-MM-DD.json`
   files. Times get their date from the file name (a finish before the start moves to
   the next day), categories are created by name, and each record gets a UUID derived
-  from its content, so importing the same files again adds nothing.
+  from its content, so importing the same files again adds nothing. Records go to the
+  user whose token is in the settings.
 
 ## Development
 
@@ -29,7 +39,7 @@ Requires Node 20+ and Rust (stable).
 
 ```bash
 npm ci
-npm test              # queue, sync and legacy import logic
+npm test              # api, queue, sync and legacy import logic
 npx tauri dev         # run the window against a running server
 npx tauri build       # installers in src-tauri/target/release/bundle/
 ```

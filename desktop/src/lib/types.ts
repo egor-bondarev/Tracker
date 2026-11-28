@@ -30,11 +30,13 @@ export interface LocalState {
 
 export interface Settings {
   serverUrl: string;
+  /** Personal API token issued by the server admin; empty until the user enters it. */
+  token: string;
   /** 0 means sync only manually and after actions. */
   syncIntervalMinutes: number;
 }
 
-export const DEFAULT_SETTINGS: Settings = { serverUrl: '', syncIntervalMinutes: 60 };
+export const DEFAULT_SETTINGS: Settings = { serverUrl: '', token: '', syncIntervalMinutes: 60 };
 
 export const EMPTY_STATE: LocalState = {
   version: 1, tasks: [], lastFinish: null, categories: [], lastSyncAt: null,

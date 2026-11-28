@@ -8,8 +8,17 @@ export function toStamp(date: Date): Stamp {
     `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
 }
 
+/**
+ * The server answers with ISO times ("YYYY-MM-DDTHH:MM:SS", maybe with fractions);
+ * the window keeps "YYYY-MM-DD HH:MM:SS" so stamps compare correctly as strings.
+ */
+export function stampFromServer(value: string): Stamp {
+  return value.replace('T', ' ').slice(0, 19);
+}
+
 export function fromStamp(stamp: Stamp): Date {
-  const [d, t] = stamp.split(' ');
+  // Also accepts the ISO "T" separator, so a stamp saved by an older build still works.
+  const [d, t = '00:00:00'] = stamp.split(/[ T]/);
   const [y, mo, day] = d.split('-').map(Number);
   const [h, mi, s] = t.split(':').map(Number);
   return new Date(y, mo - 1, day, h, mi, s);
