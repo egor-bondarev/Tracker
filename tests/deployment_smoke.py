@@ -12,11 +12,16 @@ RECORD = os.getenv('SMOKE_RECORD_URL', 'http://127.0.0.1:8000')
 ANALYTICS = os.getenv('SMOKE_ANALYTICS_URL', 'http://127.0.0.1:8001')
 WEB = os.getenv('SMOKE_WEB_URL')
 MARKER = 'deployment-smoke-persistence'
+# Token of a user created for the smoke run: python -m tracker_db.users add <name>
+TOKEN = os.getenv('SMOKE_TOKEN')
 
 
 def request(url, payload=None):
     data = None if payload is None else json.dumps(payload).encode()
-    with urlopen(Request(url, data=data, headers={'Content-Type': 'application/json'}), timeout=5) as response:
+    headers = {'Content-Type': 'application/json'}
+    if TOKEN:
+        headers['Authorization'] = f'Bearer {TOKEN}'
+    with urlopen(Request(url, data=data, headers=headers), timeout=5) as response:
         return json.load(response)
 
 
@@ -54,6 +59,8 @@ if __name__ == '__main__':
             assert b'id="root"' in response.read(), 'Tracker page is missing the React root'
         assert request(WEB + '/api/ready') == {'status': 'ready'}, 'Record API is not proxied'
     if args.phase == 'create':
+        if not TOKEN:
+            parser.error('set SMOKE_TOKEN to the token of a Tracker user')
         start = (datetime.now(timezone.utc) + timedelta(days=1)).replace(tzinfo=None, microsecond=0)
         task = request(RECORD + '/add-record/new/?is_task_finished=false', {
             'description': MARKER, 'timestamp': start.isoformat(),

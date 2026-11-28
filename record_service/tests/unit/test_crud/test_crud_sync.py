@@ -8,13 +8,13 @@ from src.crud import category, task
 from src.crud.errors import InvalidCategoryError, InvalidTimeRangeError
 from src.models import models
 from src.schemas import schemas
-from tests.helpers import generators
+from tests.helpers import generators, users
 
 
 def synced(db, cleanup, client_id, **fields):
     values = {"description": "offline task", "start_timestamp": generators.timestamp_now()}
     values.update(fields)
-    found, created = task.sync_task(db, client_id, schemas.TaskSync(**values))
+    found, created = task.sync_task(db, client_id, schemas.TaskSync(**values), user_id=users.TEST_USER_ID)
     cleanup["tasks"].append(found.id)
     return found, created
 
@@ -55,9 +55,9 @@ def test_resending_does_not_duplicate(db_session_local, cleanup):
 @allure.story("Sync task")
 def test_archived_category_is_kept(db_session_local, cleanup):
     cat = category.create_category(
-        db_session_local, schemas.CategoryCreate(name=f"cat-{uuid.uuid4().hex[:12]}"))
+        db_session_local, schemas.CategoryCreate(name=f"cat-{uuid.uuid4().hex[:12]}"), user_id=users.TEST_USER_ID)
     cleanup["categories"].append(cat.id)
-    category.update_category(db_session_local, cat.id, schemas.CategoryUpdate(archived=True))
+    category.update_category(db_session_local, cat.id, schemas.CategoryUpdate(archived=True), user_id=users.TEST_USER_ID)
 
     found, _ = synced(db_session_local, cleanup, uuid.uuid4(), category_id=cat.id)
 
@@ -70,7 +70,7 @@ def test_archived_category_is_kept(db_session_local, cleanup):
 def test_unknown_category_is_rejected(db_session_local):
     with pytest.raises(InvalidCategoryError):
         task.sync_task(db_session_local, uuid.uuid4(), schemas.TaskSync(
-            description="x", start_timestamp=generators.timestamp_now(), category_id=0))
+            description="x", start_timestamp=generators.timestamp_now(), category_id=0), user_id=users.TEST_USER_ID)
 
 
 @allure.epic("Unit tests")
@@ -80,7 +80,7 @@ def test_reversed_range_is_rejected(db_session_local):
     start = generators.timestamp_now()
     with pytest.raises(InvalidTimeRangeError):
         task.sync_task(db_session_local, uuid.uuid4(), schemas.TaskSync(
-            description="x", start_timestamp=start, finish_timestamp=start - timedelta(seconds=1)))
+            description="x", start_timestamp=start, finish_timestamp=start - timedelta(seconds=1)), user_id=users.TEST_USER_ID)
 
 
 @allure.epic("Unit tests")

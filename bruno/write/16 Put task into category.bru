@@ -1,0 +1,33 @@
+meta {
+  name: Put task into category
+  type: http
+  seq: 16
+}
+
+put {
+  url: {{baseUrl}}/api/tasks/by-client-id/{{clientId}}
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "description": "{{runTag}} in category",
+    "category_id": {{categoryId}},
+    "start_timestamp": "{{today}} 01:00:00",
+    "finish_timestamp": "{{today}} 01:10:00"
+  }
+}
+
+script:post-response {
+  bru.setVar("categorizedTaskId", res.body.id);
+}
+
+assert {
+  res.status: eq 201
+  res.body.category_id: eq {{categoryId}}
+}
+
+docs {
+  Reuses the client id of the synced task deleted above, so it creates a new task.
+}

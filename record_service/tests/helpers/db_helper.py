@@ -3,13 +3,14 @@ import uuid
 from datetime import timedelta
 from sqlalchemy.orm import Session
 from sqlmodel import select
-from tests.helpers import generators
+from tests.helpers import generators, users
 from src.models import models
 
 def add_full_record(session: Session):
     delta = timedelta(minutes=2)
 
     db_item = models.Task(
+        user_id=users.TEST_USER_ID,
         description=str(uuid.uuid4()),
         start_timestamp=generators.timestamp_now() - delta,
         finish_timestamp=generators.timestamp_now())
@@ -22,6 +23,7 @@ def add_full_record(session: Session):
 
 def add_started_record(session: Session):
     db_item = models.Task(
+        user_id=users.TEST_USER_ID,
         description=str(uuid.uuid4()),
         start_timestamp=generators.timestamp_now())
 

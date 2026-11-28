@@ -1,0 +1,19 @@
+meta {
+  name: Delete category with tasks is refused
+  type: http
+  seq: 17
+}
+
+delete {
+  url: {{baseUrl}}/api/categories/{{categoryId}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 409
+}
+
+docs {
+  A category with tasks is deleted only with detach_tasks=true.
+}

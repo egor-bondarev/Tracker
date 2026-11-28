@@ -58,6 +58,24 @@ This is a task tracking application built with a FastAPI backend, PostgreSQL dat
 3. If you forgot to start your task, type the description and press the second ■: the task starts where your previous task finished.
 4. To see your tasks list go to web ui (http://localhost:8080), set start and finish time by mask "YYYY-MM-DD hh:mm:ss" and click "Show Tasks".
 
+### Users and tokens
+
+Every record API request except `/ready` acts for one user and must send
+`Authorization: Bearer <token>`; a user only sees and changes their own tasks and
+categories. Manage users with the admin command in the record service container
+(the token is printed once; only its hash is stored):
+
+```bash
+docker compose exec record_service python -m tracker_db.users list
+docker compose exec record_service python -m tracker_db.users add NAME
+docker compose exec record_service python -m tracker_db.users token NAME   # new token, old one stops working
+docker compose exec record_service python -m tracker_db.users rename OLD NEW
+```
+
+Data created before users existed belongs to the user `owner`. Analytics
+(`/graphql`) stays readable without a token inside the home network and can be
+filtered with `userId`.
+
 ### Architecture
 #### **Record service:**
 This service works with the desktop app and writes data to the database.
@@ -101,12 +119,13 @@ a finish time before the start time is rejected with 422.
 The web server also proxies this API under `/api/` (for example
 `http://<host>:8080/api/tasks/active`), so desktop clients need only the web address.
 
-- **Categories** (unique names; archived ones are hidden by default and cannot be
-  assigned to new tasks):
+- **Categories** (names unique per user; archived ones are hidden by default and
+  cannot be assigned to new tasks):
     ```
-    GET   /categories?include_archived=false
-    POST  /categories           # {"name": "..."}
-    PATCH /categories/{id}      # {"name": "...", "archived": true}
+    GET    /categories?include_archived=false
+    POST   /categories           # {"name": "..."}
+    PATCH  /categories/{id}      # {"name": "...", "archived": true}
+    DELETE /categories/{id}      # 409 while it has tasks, unless ?detach_tasks=true
     ```
 
 #### **Analytic service:**

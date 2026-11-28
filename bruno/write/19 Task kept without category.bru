@@ -1,0 +1,16 @@
+meta {
+  name: Task kept without category
+  type: http
+  seq: 19
+}
+
+get {
+  url: {{baseUrl}}/api/tasks/{{categorizedTaskId}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.body.category_id: isNull
+}

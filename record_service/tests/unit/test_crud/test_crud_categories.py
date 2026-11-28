@@ -1,3 +1,4 @@
+from tests.helpers import users
 import uuid
 
 import allure
@@ -18,12 +19,12 @@ def unique_name():
 @allure.story("Categories")
 def test_create_and_list(db_session_local, cleanup):
     name = unique_name()
-    created = category.create_category(db_session_local, schemas.CategoryCreate(name=f"  {name} "))
+    created = category.create_category(db_session_local, schemas.CategoryCreate(name=f"  {name} "), user_id=users.TEST_USER_ID)
     cleanup["categories"].append(created.id)
 
     assert created.name == name
     assert created.archived is False
-    assert created.id in [c.id for c in category.list_categories(db_session_local)]
+    assert created.id in [c.id for c in category.list_categories(db_session_local, user_id=users.TEST_USER_ID)]
 
 
 @allure.epic("Unit tests")
@@ -32,10 +33,10 @@ def test_create_and_list(db_session_local, cleanup):
 def test_duplicate_name_conflicts(db_session_local, cleanup):
     name = unique_name()
     cleanup["categories"].append(
-        category.create_category(db_session_local, schemas.CategoryCreate(name=name)).id)
+        category.create_category(db_session_local, schemas.CategoryCreate(name=name), user_id=users.TEST_USER_ID).id)
 
     with pytest.raises(ConflictError):
-        category.create_category(db_session_local, schemas.CategoryCreate(name=name))
+        category.create_category(db_session_local, schemas.CategoryCreate(name=name), user_id=users.TEST_USER_ID)
 
 
 @allure.epic("Unit tests")
@@ -43,13 +44,13 @@ def test_duplicate_name_conflicts(db_session_local, cleanup):
 @allure.story("Categories")
 def test_archive_hides_from_default_list(db_session_local, cleanup):
     created = category.create_category(
-        db_session_local, schemas.CategoryCreate(name=unique_name()))
+        db_session_local, schemas.CategoryCreate(name=unique_name()), user_id=users.TEST_USER_ID)
     cleanup["categories"].append(created.id)
 
-    category.update_category(db_session_local, created.id, schemas.CategoryUpdate(archived=True))
+    category.update_category(db_session_local, created.id, schemas.CategoryUpdate(archived=True), user_id=users.TEST_USER_ID)
 
-    assert created.id not in [c.id for c in category.list_categories(db_session_local)]
-    assert created.id in [c.id for c in category.list_categories(db_session_local, True)]
+    assert created.id not in [c.id for c in category.list_categories(db_session_local, user_id=users.TEST_USER_ID)]
+    assert created.id in [c.id for c in category.list_categories(db_session_local, True, user_id=users.TEST_USER_ID)]
 
 
 @allure.epic("Unit tests")
@@ -57,12 +58,12 @@ def test_archive_hides_from_default_list(db_session_local, cleanup):
 @allure.story("Categories")
 def test_rename(db_session_local, cleanup):
     created = category.create_category(
-        db_session_local, schemas.CategoryCreate(name=unique_name()))
+        db_session_local, schemas.CategoryCreate(name=unique_name()), user_id=users.TEST_USER_ID)
     cleanup["categories"].append(created.id)
     new_name = unique_name()
 
     renamed = category.update_category(
-        db_session_local, created.id, schemas.CategoryUpdate(name=new_name))
+        db_session_local, created.id, schemas.CategoryUpdate(name=new_name), user_id=users.TEST_USER_ID)
 
     assert renamed.name == new_name
     assert renamed.archived is False
@@ -73,7 +74,7 @@ def test_rename(db_session_local, cleanup):
 @allure.story("Categories")
 def test_update_missing_category(db_session_local):
     with pytest.raises(NotFoundError):
-        category.update_category(db_session_local, 0, schemas.CategoryUpdate(archived=True))
+        category.update_category(db_session_local, 0, schemas.CategoryUpdate(archived=True), user_id=users.TEST_USER_ID)
 
 
 @allure.epic("Unit tests")

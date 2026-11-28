@@ -5,7 +5,9 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlmodel import select
-from tests.helpers import db_helper
+import uuid
+from tests.helpers import db_helper, users
+from tracker_db.auth import generate_token, hash_token
 from tests import config
 
 from typing_extensions import Annotated
@@ -39,6 +41,46 @@ TestingSessionLocal = sessionmaker(
     autocommit=False,
     autoflush=False,
     bind = engine)
+
+def create_user(name):
+    """A user with a fresh token; returns (id, token)."""
+    token = generate_token()
+    session = TestingSessionLocal()
+    try:
+        user = models.User(name=name, token_hash=hash_token(token))
+        session.add(user)
+        session.commit()
+        return user.id, token
+    finally:
+        session.close()
+
+
+def delete_user(user_id):
+    session = TestingSessionLocal()
+    try:
+        for model in (models.Task, models.Category):
+            session.query(model).filter(model.user_id == user_id).delete(synchronize_session=False)
+        session.query(models.User).filter(models.User.id == user_id).delete()
+        session.commit()
+    finally:
+        session.close()
+
+
+@pytest.fixture(scope="session", autouse=True)
+def test_user():
+    """Every test acts as this user; it and all its data are removed afterwards."""
+    users.TEST_USER_ID, users.TEST_TOKEN = create_user(f"test-{uuid.uuid4().hex[:12]}")
+    yield
+    delete_user(users.TEST_USER_ID)
+
+
+@pytest.fixture(name="other_user")
+def other_user_fixture():
+    """A second user with its own token, for isolation tests."""
+    user_id, token = create_user(f"other-{uuid.uuid4().hex[:12]}")
+    yield user_id, token
+    delete_user(user_id)
+
 
 @pytest.fixture(name="remove_test_data", scope="function")
 def remove_test_data_fixture():

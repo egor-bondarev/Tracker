@@ -1,0 +1,23 @@
+meta {
+  name: Delete category detaching tasks
+  type: http
+  seq: 18
+}
+
+delete {
+  url: {{baseUrl}}/api/categories/{{categoryId}}?detach_tasks=true
+  body: none
+  auth: none
+}
+
+params:query {
+  detach_tasks: true
+}
+
+assert {
+  res.status: eq 204
+}
+
+docs {
+  Deletes the category; its tasks stay, without a category.
+}
