@@ -381,14 +381,20 @@ function SettingsView({ settings, lastSyncAt, onSave, onBack }: {
   const [showToken, setShowToken] = useState(false);
   const [interval, setIntervalMinutes] = useState(settings.syncIntervalMinutes);
   const [check, setCheck] = useState<'idle' | 'ok' | 'fail' | 'auth' | 'checking'>('idle');
+  // Why the server check failed, shown under the message so a cause can be acted on.
+  const [checkDetail, setCheckDetail] = useState('');
   const valid = /^https?:\/\/\S+$/.test(serverUrl.trim());
 
   // Reachability first (no token needed), then an authenticated call to check the token.
   async function onCheck() {
     if (!valid) return;
     setCheck('checking');
+    setCheckDetail('');
     const api = new TrackerApi(serverUrl, tauriFetch, token);
-    if (!await api.ready().catch(() => false)) {
+    try {
+      if (!await api.ready()) throw new Error('Unexpected /api/ready answer');
+    } catch (error) {
+      setCheckDetail(error instanceof Error ? error.message : String(error));
       setCheck('fail');
       return;
     }
@@ -396,6 +402,9 @@ function SettingsView({ settings, lastSyncAt, onSave, onBack }: {
       await api.activeTask();
       setCheck('ok');
     } catch (error) {
+      if (!(error instanceof AuthError)) {
+        setCheckDetail(error instanceof Error ? error.message : String(error));
+      }
       setCheck(error instanceof AuthError ? 'auth' : 'fail');
     }
   }
@@ -433,6 +442,7 @@ function SettingsView({ settings, lastSyncAt, onSave, onBack }: {
         </div>
         {check === 'ok' && <p className="hint ok">Сервер отвечает</p>}
         {check === 'fail' && <p className="hint error">Сервер не отвечает</p>}
+        {check === 'fail' && checkDetail && <p className="hint detail">{checkDetail}</p>}
         {check === 'auth' && (
           <p className="hint error">{token.trim() ? 'Неверный токен' : 'Токен не указан'}</p>
         )}
